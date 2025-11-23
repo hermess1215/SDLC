@@ -97,7 +97,7 @@ export function TeacherDashboard({ user, onLogout }: TeacherDashboardProps) {
             }`}
           >
             <Bell className="w-6 h-6" />
-            <span className="text-xs">공지사항</span>
+            <span className="text-xs">공지 관리</span>
           </button>
         </div>
       </div>
