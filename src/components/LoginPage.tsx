@@ -94,6 +94,7 @@ export function LoginPage({ onLogin, onShowSignup }: LoginPageProps) {
                     <Label htmlFor="studentPassword">비밀번호</Label>
                     <Input
                       id="studentName"
+                      type='password'
                       placeholder="••••••••"
                       value={studentPassword}
                       onChange={(e) => setStudentPassword(e.target.value)}

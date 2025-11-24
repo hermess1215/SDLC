@@ -21,7 +21,6 @@ export interface Program {
   location: string;
   capacity: number;
   enrolled: number;
-  category: string;
 }
 
 export function TeacherDashboard({ user, onLogout }: TeacherDashboardProps) {
@@ -35,7 +34,6 @@ export function TeacherDashboard({ user, onLogout }: TeacherDashboardProps) {
       location: '컴퓨터실',
       capacity: 20,
       enrolled: 15,
-      category: 'IT',
     },
     {
       id: 2,
@@ -45,7 +43,6 @@ export function TeacherDashboard({ user, onLogout }: TeacherDashboardProps) {
       location: '과학실',
       capacity: 18,
       enrolled: 14,
-      category: '과학',
     },
   ]);
 

@@ -60,7 +60,6 @@ export function TeacherPrograms({ programs, setPrograms }: TeacherProgramsProps)
     schedule: '',
     location: '',
     capacity: '',
-    category: '',
   });
 
   const handleCreateProgram = () => {
@@ -77,7 +76,6 @@ export function TeacherPrograms({ programs, setPrograms }: TeacherProgramsProps)
       location: formData.location,
       capacity: parseInt(formData.capacity) || 20,
       enrolled: 0,
-      category: formData.category,
     };
 
     setPrograms([...programs, newProgram]);
@@ -89,7 +87,6 @@ export function TeacherPrograms({ programs, setPrograms }: TeacherProgramsProps)
       schedule: '',
       location: '',
       capacity: '',
-      category: '',
     });
   };
 
@@ -101,7 +98,6 @@ export function TeacherPrograms({ programs, setPrograms }: TeacherProgramsProps)
       schedule: program.schedule,
       location: program.location,
       capacity: program.capacity.toString(),
-      category: program.category,
     });
     setIsEditDialogOpen(true);
   };
@@ -123,7 +119,6 @@ export function TeacherPrograms({ programs, setPrograms }: TeacherProgramsProps)
             schedule: formData.schedule,
             location: formData.location,
             capacity: parseInt(formData.capacity) || 20,
-            category: formData.category,
           }
         : program
     );
@@ -138,7 +133,6 @@ export function TeacherPrograms({ programs, setPrograms }: TeacherProgramsProps)
       schedule: '',
       location: '',
       capacity: '',
-      category: '',
     });
   };
 
@@ -164,7 +158,6 @@ export function TeacherPrograms({ programs, setPrograms }: TeacherProgramsProps)
         schedule: '',
         location: '',
         capacity: '',
-        category: '',
       });
     }
   };
@@ -193,15 +186,6 @@ export function TeacherPrograms({ programs, setPrograms }: TeacherProgramsProps)
                   placeholder="예: 코딩 교실"
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="category">카테고리</Label>
-                <Input
-                  id="category"
-                  placeholder="예: IT, 예술, 체육"
-                  value={formData.category}
-                  onChange={(e) => setFormData({ ...formData, category: e.target.value })}
                 />
               </div>
               <div className="space-y-2">
@@ -258,7 +242,6 @@ export function TeacherPrograms({ programs, setPrograms }: TeacherProgramsProps)
                 <div className="flex-1">
                   <CardTitle className="text-base mb-1">{program.name}</CardTitle>
                   <div className="flex items-center gap-2">
-                    <Badge>{program.category}</Badge>
                     <Badge variant="outline">
                       <Users className="w-3 h-3 mr-1" />
                       {program.enrolled}/{program.capacity}
@@ -328,15 +311,6 @@ export function TeacherPrograms({ programs, setPrograms }: TeacherProgramsProps)
                 placeholder="예: 코딩 교실"
                 value={formData.name}
                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="edit-category">카테고리</Label>
-              <Input
-                id="edit-category"
-                placeholder="예: IT, 예술, 체육"
-                value={formData.category}
-                onChange={(e) => setFormData({ ...formData, category: e.target.value })}
               />
             </div>
             <div className="space-y-2">

@@ -4,9 +4,9 @@ import { Users, BookOpen, GraduationCap } from 'lucide-react';
 
 export function AdminHome() {
   const stats = [
-    { label: '전체 학생', value: '1,234', icon: Users, color: 'bg-blue-500', change: '+12%' },
-    { label: '전체 선생님', value: '45', icon: GraduationCap, color: 'bg-green-500', change: '+3' },
-    { label: '운영 프로그램', value: '28', icon: BookOpen, color: 'bg-purple-500', change: '+5' },
+    { label: '전체 학생', value: '1,234', icon: Users, color: 'bg-blue-500' },
+    { label: '전체 선생님', value: '45', icon: GraduationCap, color: 'bg-green-500' },
+    { label: '운영 프로그램', value: '28', icon: BookOpen, color: 'bg-purple-500' },
   ];
 
   return (
@@ -30,9 +30,6 @@ export function AdminHome() {
                 >
                   <stat.icon className="w-5 h-5 text-white" />
                 </div>
-                <Badge variant="outline" className="text-green-600 border-green-600">
-                  {stat.change}
-                </Badge>
               </div>
               <p className="text-2xl mb-1">{stat.value}</p>
               <p className="text-sm text-gray-600">{stat.label}</p>

@@ -24,7 +24,6 @@ interface Program {
   location: string;
   capacity: number;
   enrolled: number;
-  category: string;
 }
 
 interface StudentProgramsProps {
@@ -55,7 +54,6 @@ export function StudentPrograms({ onEnrollProgram, enrolledPrograms }: StudentPr
       location: '컴퓨터실',
       capacity: 20,
       enrolled: 15,
-      category: 'IT',
     },
     {
       id: 2,
@@ -66,7 +64,6 @@ export function StudentPrograms({ onEnrollProgram, enrolledPrograms }: StudentPr
       location: '미술실',
       capacity: 15,
       enrolled: 12,
-      category: '예술',
     },
     {
       id: 3,
@@ -77,7 +74,6 @@ export function StudentPrograms({ onEnrollProgram, enrolledPrograms }: StudentPr
       location: '영어교실',
       capacity: 12,
       enrolled: 10,
-      category: '언어',
     },
     {
       id: 4,
@@ -88,7 +84,6 @@ export function StudentPrograms({ onEnrollProgram, enrolledPrograms }: StudentPr
       location: '운동장',
       capacity: 25,
       enrolled: 20,
-      category: '체육',
     },
     {
       id: 5,
@@ -99,14 +94,12 @@ export function StudentPrograms({ onEnrollProgram, enrolledPrograms }: StudentPr
       location: '과학실',
       capacity: 18,
       enrolled: 14,
-      category: '과학',
     },
   ];
 
   const filteredPrograms = programs.filter((program) =>
     program.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    program.teacher.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    program.category.toLowerCase().includes(searchQuery.toLowerCase())
+    program.teacher.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   const handleApply = (program: Program) => {
@@ -189,7 +182,6 @@ export function StudentPrograms({ onEnrollProgram, enrolledPrograms }: StudentPr
                   <CardTitle className="text-base">{program.name}</CardTitle>
                   <p className="text-sm text-gray-600 mt-1">{program.teacher}</p>
                 </div>
-                <Badge>{program.category}</Badge>
               </div>
             </CardHeader>
             <CardContent className="space-y-2">

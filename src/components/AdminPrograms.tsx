@@ -18,7 +18,6 @@ interface Program {
   location: string;
   capacity: number;
   enrolled: number;
-  category: string;
   status: 'active' | 'pending' | 'inactive';
 }
 
@@ -57,7 +56,6 @@ export function AdminPrograms() {
       location: '컴퓨터실',
       capacity: 20,
       enrolled: 15,
-      category: 'IT',
       status: 'active',
     },
     {
@@ -69,7 +67,6 @@ export function AdminPrograms() {
       location: '운동장',
       capacity: 15,
       enrolled: 0,
-      category: 'IT',
       status: 'pending',
     },
     {
@@ -81,7 +78,6 @@ export function AdminPrograms() {
       location: '미술실',
       capacity: 15,
       enrolled: 12,
-      category: '예술',
       status: 'active',
     },
     {
@@ -93,7 +89,6 @@ export function AdminPrograms() {
       location: '영어교실',
       capacity: 12,
       enrolled: 10,
-      category: '언어',
       status: 'active',
     },
     {
@@ -105,7 +100,6 @@ export function AdminPrograms() {
       location: 'STEAM실',
       capacity: 12,
       enrolled: 0,
-      category: 'IT',
       status: 'pending',
     },
   ]);
@@ -117,8 +111,7 @@ export function AdminPrograms() {
     list.filter(
       (program) =>
         program.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        program.teacher.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        program.category.toLowerCase().includes(searchQuery.toLowerCase())
+        program.teacher.toLowerCase().includes(searchQuery.toLowerCase())
     );
 
   const handleApprove = (program: Program) => {
@@ -178,7 +171,6 @@ export function AdminPrograms() {
           <div className="flex items-center gap-2">
             <div className="flex flex-col items-end gap-1">
               {getStatusBadge(program.status)}
-              <Badge variant="outline">{program.category}</Badge>
             </div>
             <Button
               variant="outline"
