@@ -14,7 +14,7 @@ interface LoginPageProps {
 
 export function LoginPage({ onLogin, onShowSignup }: LoginPageProps) {
   const [studentEmail, setStudentEmail] = useState('');
-  const [studentName, setStudentName] = useState('');
+  const [studentPassword, setStudentPassword] = useState('');
   const [teacherEmail, setTeacherEmail] = useState('');
   const [teacherPassword, setTeacherPassword] = useState('');
   const [adminEmail, setAdminEmail] = useState('');
@@ -22,10 +22,10 @@ export function LoginPage({ onLogin, onShowSignup }: LoginPageProps) {
 
   const handleStudentLogin = (e: React.FormEvent) => {
     e.preventDefault();
-    if (studentEmail && studentName) {
+    if (studentEmail && studentPassword) {
       onLogin({
         email: studentEmail,
-        name: studentName,
+        password: studentPassword,
         type: 'student',
       });
     }
@@ -37,6 +37,7 @@ export function LoginPage({ onLogin, onShowSignup }: LoginPageProps) {
       onLogin({
         email: teacherEmail,
         name: teacherEmail.split('@')[0],
+        password: teacherPassword,
         type: 'teacher',
       });
     }
@@ -48,6 +49,7 @@ export function LoginPage({ onLogin, onShowSignup }: LoginPageProps) {
       onLogin({
         email: adminEmail,
         name: '관리자',
+        password: adminPassword,
         type: 'admin',
       });
     }
@@ -89,12 +91,12 @@ export function LoginPage({ onLogin, onShowSignup }: LoginPageProps) {
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="studentName">이름</Label>
+                    <Label htmlFor="studentPassword">비밀번호</Label>
                     <Input
                       id="studentName"
-                      placeholder="홍길동"
-                      value={studentName}
-                      onChange={(e) => setStudentName(e.target.value)}
+                      placeholder="••••••••"
+                      value={studentPassword}
+                      onChange={(e) => setStudentPassword(e.target.value)}
                       required
                     />
                   </div>

@@ -20,6 +20,7 @@ export function SignupPage({ onSignup, onBackToLogin }: SignupPageProps) {
   const [studentData, setStudentData] = useState({
     name: '',
     email: '',
+    phone: '',
     password: '',
     confirmPassword: '',
   });
@@ -28,8 +29,10 @@ export function SignupPage({ onSignup, onBackToLogin }: SignupPageProps) {
   const [teacherData, setTeacherData] = useState({
     name: '',
     email: '',
+    phone: '',
     password: '',
     confirmPassword: '',
+    inviteCode: '',
   });
 
   // Admin form
@@ -37,8 +40,6 @@ export function SignupPage({ onSignup, onBackToLogin }: SignupPageProps) {
     name: '',
     email: '',
     phone: '',
-    department: '',
-    employeeId: '',
     password: '',
     confirmPassword: '',
     inviteCode: '',
@@ -64,6 +65,8 @@ export function SignupPage({ onSignup, onBackToLogin }: SignupPageProps) {
       onSignup({
         email: studentData.email,
         name: studentData.name,
+        password: studentData.password,
+        confirmPassword: studentData.confirmPassword,
         type: 'student',
       });
     } catch (error: any) {
@@ -92,6 +95,8 @@ export function SignupPage({ onSignup, onBackToLogin }: SignupPageProps) {
     onSignup({
       email: teacherData.email,
       name: teacherData.name,
+      password: teacherData.password,
+      confirmPassword: teacherData.confirmPassword,
       type: 'teacher',
     });
   } catch (error: any) {
@@ -118,6 +123,8 @@ export function SignupPage({ onSignup, onBackToLogin }: SignupPageProps) {
     onSignup({
       email: adminData.email,
       name: adminData.name,
+      password: adminData.password,
+      confirmPassword: adminData.confirmPassword,
       type: 'admin',
     });
   };
@@ -172,6 +179,17 @@ export function SignupPage({ onSignup, onBackToLogin }: SignupPageProps) {
                       placeholder="student@school.com"
                       value={studentData.email}
                       onChange={(e) => setStudentData({ ...studentData, email: e.target.value })}
+                      required
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="studentPhone">전화번호 *</Label>
+                    <Input
+                      id="studentPhone"
+                      type="tel"
+                      placeholder="010-1234-5678"
+                      value={studentData.phone}
+                      onChange={(e) => setStudentData({ ...studentData, phone: e.target.value })}
                       required
                     />
                   </div>
@@ -237,6 +255,27 @@ export function SignupPage({ onSignup, onBackToLogin }: SignupPageProps) {
                     />
                   </div>
                   <div className="space-y-2">
+                    <Label htmlFor="teacherInviteCode">초대 코드 *</Label>
+                    <Input
+                      id="teacherInviteCode"
+                      placeholder="초대 코드를 입력하세요"
+                      value={teacherData.inviteCode}
+                      onChange={(e) => setTeacherData({ ...teacherData, inviteCode: e.target.value })}
+                      required
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="teacherPhone">전화번호 *</Label>
+                    <Input
+                      id="teacherPhone"
+                      type="tel"
+                      placeholder="010-1234-5678"
+                      value={teacherData.phone}
+                      onChange={(e) => setTeacherData({ ...teacherData, phone: e.target.value })}
+                      required
+                    />
+                  </div>
+                  <div className="space-y-2">
                     <Label htmlFor="teacherPassword">비밀번호 *</Label>
                     <Input
                       id="teacherPassword"
@@ -288,33 +327,6 @@ export function SignupPage({ onSignup, onBackToLogin }: SignupPageProps) {
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="adminEmployeeId">직원 번호 *</Label>
-                    <Input
-                      id="adminEmployeeId"
-                      placeholder="A20240001"
-                      value={adminData.employeeId}
-                      onChange={(e) => setAdminData({ ...adminData, employeeId: e.target.value })}
-                      required
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="adminDepartment">부서 *</Label>
-                    <Select
-                      value={adminData.department}
-                      onValueChange={(value) => setAdminData({ ...adminData, department: value })}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="부서 선택" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="교무부">교무부</SelectItem>
-                        <SelectItem value="학생부">학생부</SelectItem>
-                        <SelectItem value="행정실">행정실</SelectItem>
-                        <SelectItem value="연구부">연구부</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="space-y-2">
                     <Label htmlFor="adminEmail">이메일 *</Label>
                     <Input
                       id="adminEmail"
@@ -322,17 +334,6 @@ export function SignupPage({ onSignup, onBackToLogin }: SignupPageProps) {
                       placeholder="admin@school.com"
                       value={adminData.email}
                       onChange={(e) => setAdminData({ ...adminData, email: e.target.value })}
-                      required
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="adminPhone">전화번호 *</Label>
-                    <Input
-                      id="adminPhone"
-                      type="tel"
-                      placeholder="010-1234-5678"
-                      value={adminData.phone}
-                      onChange={(e) => setAdminData({ ...adminData, phone: e.target.value })}
                       required
                     />
                   </div>

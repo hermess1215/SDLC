@@ -23,9 +23,6 @@ export function StudentDashboard({ user, onLogout, enrolledPrograms, onEnrollPro
     <div className="flex flex-col h-screen bg-gray-50">
       {/* Header */}
       <div className="bg-white border-b px-4 py-3 flex items-center justify-between">
-        <div>
-          <p>{user.name} 학생</p>
-        </div>
         <Button variant="ghost" size="icon" onClick={onLogout}>
           <LogOut className="w-5 h-5" />
         </Button>

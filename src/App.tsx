@@ -9,7 +9,9 @@ export type UserType = 'student' | 'teacher' | 'admin' | null;
 
 export interface User {
   email: string;
-  name: string;
+  name?: string;
+  password: string;
+  confirmPassword: string;
   type: UserType;
 }
 
