@@ -13,8 +13,8 @@ export interface User {
   password: string;
   confirmPassword?: string;
   grade?: string;
-  classNum?: string;
-  studentNum?: string;
+  classNo?: string;
+  classNumber?: string;
   type: UserType;
 }
 

@@ -20,10 +20,10 @@ export function SignupPage({ onSignup, onBackToLogin }: SignupPageProps) {
   const [studentData, setStudentData] = useState({
     name: '',
     email: '',
-    phone: '',
+    phoneNumber: '',
     grade: '',   // 학년
-    classNum: '', // 반
-    studentNum: '', // 번호
+    classNo: '', // 반
+    classNumber: '', // 번호
     password: '',
     confirmPassword: '',
   });
@@ -32,10 +32,10 @@ export function SignupPage({ onSignup, onBackToLogin }: SignupPageProps) {
   const [teacherData, setTeacherData] = useState({
     name: '',
     email: '',
-    phone: '',
+    phoneNumber: '',
     password: '',
     confirmPassword: '',
-    inviteCode: '',
+    authCode: '',
   });
 
   // Admin form
@@ -45,7 +45,7 @@ export function SignupPage({ onSignup, onBackToLogin }: SignupPageProps) {
     phone: '',
     password: '',
     confirmPassword: '',
-    inviteCode: '',
+    authCode: '',
   });
 
   const handleStudentSignup = async (e: React.FormEvent) => {
@@ -62,8 +62,9 @@ export function SignupPage({ onSignup, onBackToLogin }: SignupPageProps) {
         email: studentData.email,
         password: studentData.password,
         grade: studentData.grade,
-        classNum: studentData.classNum,
-        studentNum: studentData.studentNum,
+        classNo: studentData.classNo,
+        classNumber: studentData.classNumber,
+        phoneNumber: studentData.phoneNumber,
       });
 
       console.log('서버 응답:', response);
@@ -75,8 +76,8 @@ export function SignupPage({ onSignup, onBackToLogin }: SignupPageProps) {
         confirmPassword: studentData.confirmPassword,
         type: 'student',
         grade: studentData.grade,
-        classNum: studentData.classNum,
-        studentNum: studentData.studentNum,
+        classNo: studentData.classNo,
+        classNumber: studentData.classNumber,
       });
     } catch (error: any) {
       console.error('회원가입 실패:', error);
@@ -97,6 +98,8 @@ export function SignupPage({ onSignup, onBackToLogin }: SignupPageProps) {
         name: teacherData.name,
         email: teacherData.email,
         password: teacherData.password,
+        phoneNumber: teacherData.phoneNumber,
+        authCode: teacherData.authCode,
       });
 
       console.log('서버 응답:', response);
@@ -114,19 +117,28 @@ export function SignupPage({ onSignup, onBackToLogin }: SignupPageProps) {
     }
   };
 
-  const handleAdminSignup = (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleAdminSignup = async (e: React.FormEvent) => {
+  e.preventDefault();
 
-    if (adminData.password !== adminData.confirmPassword) {
-      toast.error('비밀번호가 일치하지 않습니다');
-      return;
-    }
+  if (adminData.password !== adminData.confirmPassword) {
+    toast.error('비밀번호가 일치하지 않습니다');
+    return;
+  }
 
-    if (adminData.inviteCode !== 'ADMIN2025') {
-      toast.error('유효하지 않은 초대 코드입니다');
-      return;
-    }
+  if (adminData.authCode !== 'ADMIN2025') {
+    toast.error('유효하지 않은 초대 코드입니다');
+    return;
+  }
 
+  try {
+    const response = await signupApi.adminSignup({
+      name: adminData.name,
+      email: adminData.email,
+      password: adminData.password,
+      authCode: adminData.authCode,
+    });
+
+    console.log('서버 응답:', response);
     toast.success('관리자 계정이 생성되었습니다!');
     onSignup({
       email: adminData.email,
@@ -135,7 +147,12 @@ export function SignupPage({ onSignup, onBackToLogin }: SignupPageProps) {
       confirmPassword: adminData.confirmPassword,
       type: 'admin',
     });
-  };
+  } catch (error: any) {
+    console.error('관리자 회원가입 실패:', error);
+    toast.error('회원가입 중 오류가 발생했습니다.');
+  }
+};
+
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center p-4">
@@ -194,26 +211,26 @@ export function SignupPage({ onSignup, onBackToLogin }: SignupPageProps) {
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="studentClassNum">반 *</Label>
+                    <Label htmlFor="studentClassNo">반 *</Label>
                     <Input
-                      id="studentClassNum"
+                      id="studentClassNo"
                       type="number"
                       min={1}
                       placeholder="반 입력"
-                      value={studentData.classNum}
-                      onChange={(e) => setStudentData({ ...studentData, classNum: e.target.value })}
+                      value={studentData.classNo}
+                      onChange={(e) => setStudentData({ ...studentData, classNo: e.target.value })}
                       required
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="studentNum">번호 *</Label>
+                    <Label htmlFor="classNumber">번호 *</Label>
                     <Input
-                      id="studentNum"
+                      id="classNumber"
                       type="number"
                       min={1}
                       placeholder="번호 입력"
-                      value={studentData.studentNum}
-                      onChange={(e) => setStudentData({ ...studentData, studentNum: e.target.value })}
+                      value={studentData.classNumber}
+                      onChange={(e) => setStudentData({ ...studentData, classNumber: e.target.value })}
                       required
                     />
                   </div>
@@ -230,13 +247,13 @@ export function SignupPage({ onSignup, onBackToLogin }: SignupPageProps) {
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="studentPhone">전화번호 *</Label>
+                    <Label htmlFor="studentPhoneNumber">전화번호 *</Label>
                     <Input
-                      id="studentPhone"
+                      id="studentPhoneNumber"
                       type="tel"
                       placeholder="010-1234-5678"
-                      value={studentData.phone}
-                      onChange={(e) => setStudentData({ ...studentData, phone: e.target.value })}
+                      value={studentData.phoneNumber}
+                      onChange={(e) => setStudentData({ ...studentData, phoneNumber: e.target.value })}
                       required
                     />
                   </div>
@@ -302,23 +319,23 @@ export function SignupPage({ onSignup, onBackToLogin }: SignupPageProps) {
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="teacherInviteCode">초대 코드 *</Label>
+                    <Label htmlFor="teacherauthCode">초대 코드 *</Label>
                     <Input
-                      id="teacherInviteCode"
+                      id="teacherauthCode"
                       placeholder="초대 코드를 입력하세요"
-                      value={teacherData.inviteCode}
-                      onChange={(e) => setTeacherData({ ...teacherData, inviteCode: e.target.value })}
+                      value={teacherData.authCode}
+                      onChange={(e) => setTeacherData({ ...teacherData, authCode: e.target.value })}
                       required
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="teacherPhone">전화번호 *</Label>
+                    <Label htmlFor="teacherPhoneNumber">전화번호 *</Label>
                     <Input
-                      id="teacherPhone"
+                      id="teacherPhoneNumber"
                       type="tel"
                       placeholder="010-1234-5678"
-                      value={teacherData.phone}
-                      onChange={(e) => setTeacherData({ ...teacherData, phone: e.target.value })}
+                      value={teacherData.phoneNumber}
+                      onChange={(e) => setTeacherData({ ...teacherData, phoneNumber: e.target.value })}
                       required
                     />
                   </div>
@@ -385,12 +402,12 @@ export function SignupPage({ onSignup, onBackToLogin }: SignupPageProps) {
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="adminInviteCode">초대 코드 *</Label>
+                    <Label htmlFor="adminauthCode">초대 코드 *</Label>
                     <Input
-                      id="adminInviteCode"
+                      id="adminauthCode"
                       placeholder="초대 코드를 입력하세요"
-                      value={adminData.inviteCode}
-                      onChange={(e) => setAdminData({ ...adminData, inviteCode: e.target.value })}
+                      value={adminData.authCode}
+                      onChange={(e) => setAdminData({ ...adminData, authCode: e.target.value })}
                       required
                     />
                     <p className="text-xs text-gray-600">관리자만 접근할 수 있는 초대 코드가 필요합니다</p>

@@ -1,11 +1,15 @@
+// LoginPage.tsx
 import { useState } from 'react';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { Label } from './ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card';
-import { GraduationCap, UserCircle } from 'lucide-react';
+import { GraduationCap } from 'lucide-react';
+import { toast } from 'sonner';
 import type { User } from '../App';
+import { loginApi } from '../api/LoginApi'; // LoginApi 임포트
+import axios from 'axios'; // AxiosError 타입 사용을 위해 임포트
 
 interface LoginPageProps {
   onLogin: (user: User) => void;
@@ -20,39 +24,73 @@ export function LoginPage({ onLogin, onShowSignup }: LoginPageProps) {
   const [adminEmail, setAdminEmail] = useState('');
   const [adminPassword, setAdminPassword] = useState('');
 
-  const handleStudentLogin = (e: React.FormEvent) => {
+  // 공통 로그인 처리 함수 (비동기 함수)
+  const handleLogin = async (
+    e: React.FormEvent,
+    email: string,
+    password: string,
+    type: 'student' | 'teacher' | 'admin',
+    loginFunction: (data: { email: string; password: string }) => Promise<{ accessToken: string }>,
+  ) => {
     e.preventDefault();
-    if (studentEmail && studentPassword) {
+
+    if (!email || !password) {
+      toast.error('이메일과 비밀번호를 모두 입력해주세요.');
+      return;
+    }
+
+    try {
+      // API 호출
+      const { accessToken } = await loginFunction({ email, password });
+
+      // API 호출 성공 시:
+      
+      // 1. JWT 액세스 토큰을 로컬 스토리지에 저장
+      localStorage.setItem('accessToken', accessToken);
+
+      // 2. 로그인 성공 알림
+      toast.success(`${type === 'student' ? '학생' : type === 'teacher' ? '선생님' : '관리자'} 로그인에 성공했습니다!`);
+
+      // 3. 다음 페이지로 전환 (성공했을 때만 호출)
       onLogin({
-        email: studentEmail,
-        password: studentPassword,
-        type: 'student',
+        email,
+        password,
+        type,
       });
+
+    } catch (error) {
+      // API 호출 실패 시:
+      console.error('로그인 실패:', error);
+      let errorMessage = '로그인 중 오류가 발생했습니다.';
+      
+      if (axios.isAxiosError(error) && error.response) {
+        // 401, 400, 그리고 현재 서버에서 발생하는 403까지 인증 실패로 간주
+        if (error.response.status === 401 || 
+            error.response.status === 400 || 
+            error.response.status === 403 // 🚨 403을 명시적으로 추가
+            ) {
+          errorMessage = '이메일 또는 비밀번호가 올바르지 않습니다.';
+        } else {
+          errorMessage = `로그인 실패: 서버 오류 (${error.response.status})`;
+        }
+      }
+
+      // 4. 오류 메시지만 표시하고 페이지 전환은 하지 않음
+      toast.error(errorMessage);
     }
   };
 
-  const handleTeacherLogin = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (teacherEmail && teacherPassword) {
-      onLogin({
-        email: teacherEmail,
-        name: teacherEmail.split('@')[0],
-        password: teacherPassword,
-        type: 'teacher',
-      });
-    }
+
+  const handleStudentLogin = async (e: React.FormEvent) => {
+    await handleLogin(e, studentEmail, studentPassword, 'student', loginApi.studentLogin);
   };
 
-  const handleAdminLogin = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (adminEmail && adminPassword) {
-      onLogin({
-        email: adminEmail,
-        name: '관리자',
-        password: adminPassword,
-        type: 'admin',
-      });
-    }
+  const handleTeacherLogin = async (e: React.FormEvent) => {
+    await handleLogin(e, teacherEmail, teacherPassword, 'teacher', loginApi.teacherLogin);
+  };
+
+  const handleAdminLogin = async (e: React.FormEvent) => {
+    await handleLogin(e, adminEmail, adminPassword, 'admin', loginApi.adminLogin);
   };
 
   return (
@@ -78,6 +116,7 @@ export function LoginPage({ onLogin, onShowSignup }: LoginPageProps) {
                 <CardDescription>학생 정보로 로그인하세요</CardDescription>
               </CardHeader>
               <CardContent>
+                {/* onSubmit에 handleStudentLogin 연결 */}
                 <form onSubmit={handleStudentLogin} className="space-y-4">
                   <div className="space-y-2">
                     <Label htmlFor="studentEmail">이메일</Label>
@@ -93,7 +132,7 @@ export function LoginPage({ onLogin, onShowSignup }: LoginPageProps) {
                   <div className="space-y-2">
                     <Label htmlFor="studentPassword">비밀번호</Label>
                     <Input
-                      id="studentName"
+                      id="studentPassword"
                       type='password'
                       placeholder="••••••••"
                       value={studentPassword}
@@ -116,6 +155,7 @@ export function LoginPage({ onLogin, onShowSignup }: LoginPageProps) {
                 <CardDescription>교직원 계정으로 로그인하세요</CardDescription>
               </CardHeader>
               <CardContent>
+                 {/* onSubmit에 handleTeacherLogin 연결 */}
                 <form onSubmit={handleTeacherLogin} className="space-y-4">
                   <div className="space-y-2">
                     <Label htmlFor="teacherEmail">이메일</Label>
@@ -154,6 +194,7 @@ export function LoginPage({ onLogin, onShowSignup }: LoginPageProps) {
                 <CardDescription>관리자 계정으로 로그인하세요</CardDescription>
               </CardHeader>
               <CardContent>
+                 {/* onSubmit에 handleAdminLogin 연결 */}
                 <form onSubmit={handleAdminLogin} className="space-y-4">
                   <div className="space-y-2">
                     <Label htmlFor="adminEmail">이메일</Label>
