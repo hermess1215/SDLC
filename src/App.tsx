@@ -12,6 +12,9 @@ export interface User {
   name?: string;
   password: string;
   confirmPassword?: string;
+  grade?: string;
+  classNum?: string;
+  studentNum?: string;
   type: UserType;
 }
 
