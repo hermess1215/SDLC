@@ -75,7 +75,7 @@ export function LoginPage({ onLogin, onShowSignup }: LoginPageProps) {
             <Card>
               <CardHeader>
                 <CardTitle>학생 로그인</CardTitle>
-                <CardDescription>학생증 정보로 로그인하세요</CardDescription>
+                <CardDescription>학생 정보로 로그인하세요</CardDescription>
               </CardHeader>
               <CardContent>
                 <form onSubmit={handleStudentLogin} className="space-y-4">

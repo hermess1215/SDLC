@@ -274,7 +274,7 @@ export function AdminPrograms() {
                   </Button>
                 </div>
               ) : (
-                <Button 
+                <Button
                   className="w-full bg-blue-500 hover:bg-blue-600"
                   onClick={() => handleViewStudents(selectedProgram)}
                 >
@@ -289,45 +289,62 @@ export function AdminPrograms() {
 
       {/* Student List Dialog */}
       <Dialog open={showStudentList} onOpenChange={setShowStudentList}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle>{selectedProgram?.name}</DialogTitle>
-            <DialogDescription>
+        <DialogContent
+          className="w-full max-w-md h-[65vh] flex flex-col"
+        >
+          {/* Header (고정 영역) */}
+          <DialogHeader className="pb-2">
+            <DialogTitle className="text-sm">{selectedProgram?.name}</DialogTitle>
+            <DialogDescription className="text-xs text-gray-500">
               수강생 {selectedProgram?.enrolled}명 / 정원 {selectedProgram?.capacity}명
             </DialogDescription>
           </DialogHeader>
-          <div className="space-y-3">
-            <div className="space-y-2">
-              {Array.from({ length: selectedProgram?.enrolled || 0 }, (_, i) => {
-                const programColor = selectedProgram ? getProgramColor(selectedProgram.id) : { bg: 'bg-gray-50', border: 'border-gray-200' };
-                const studentName = studentNames[i % studentNames.length];
-                return (
-                  <div
-                    key={i}
-                    className={`flex items-center justify-between p-3 rounded-lg border ${programColor.bg} ${programColor.border}`}
-                  >
-                    <div>
-                      <p className="text-sm">{studentName}</p>
-                      <p className="text-xs text-gray-600">2024010{i + 1}</p>
-                    </div>
-                    <Badge variant="outline" className="bg-white">
-                      {selectedProgram?.name.includes('코딩') ? '1학년' : 
-                       selectedProgram?.name.includes('미술') ? '2학년' : 
-                       selectedProgram?.name.includes('영어') ? '3학년' : '1학년'}
-                    </Badge>
+
+          {/* Scroll 영역 (가변) */}
+          <div className="flex-1 overflow-y-auto space-y-1 mt-1">
+            {Array.from({ length: selectedProgram?.enrolled || 0 }, (_, i) => {
+              const programColor = selectedProgram
+                ? getProgramColor(selectedProgram.id)
+                : { bg: "bg-gray-50", border: "border-gray-200" };
+
+              const studentName = studentNames[i % studentNames.length];
+
+              return (
+                <div
+                  key={i}
+                  className={`flex items-center justify-between p-1 rounded border text-xs ${programColor.bg} ${programColor.border}`}
+                >
+                  <div>
+                    <p className="truncate">{studentName}</p>
+                    <p className="text-[10px] text-gray-500">2024010{i + 1}</p>
                   </div>
-                );
-              })}
-              {selectedProgram?.enrolled === 0 && (
-                <div className="text-center py-8 text-gray-500">
-                  <Users className="w-12 h-12 mx-auto mb-2 text-gray-400" />
-                  <p className="text-sm">아직 수강생이 없습니다</p>
+
+                  <Badge variant="outline" className="bg-white text-[11px] px-2 py-0.5">
+                    {selectedProgram?.name.includes("코딩")
+                      ? "1학년"
+                      : selectedProgram?.name.includes("미술")
+                        ? "2학년"
+                        : selectedProgram?.name.includes("영어")
+                          ? "3학년"
+                          : "1학년"}
+                  </Badge>
                 </div>
-              )}
-            </div>
+              );
+            })}
+
+            {selectedProgram?.enrolled === 0 && (
+              <div className="text-center py-10 text-gray-500">
+                <Users className="w-10 h-10 mx-auto mb-2 text-gray-400" />
+                <p className="text-sm">아직 수강생이 없습니다</p>
+              </div>
+            )}
+          </div>
+
+          {/* Footer (고정 영역) */}
+          <div className="p-4 pt-2 shrink-0">
             <Button
               variant="outline"
-              className="w-full text-red-500 border-red-500 hover:bg-red-50"
+              className="w-full text-red-500 border-red-500 hover:bg-red-50 text-sm"
               onClick={() => selectedProgram && handleDeleteProgram(selectedProgram)}
             >
               프로그램 삭제

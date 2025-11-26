@@ -113,13 +113,13 @@ export function TeacherPrograms({ programs, setPrograms }: TeacherProgramsProps)
     const updatedPrograms = programs.map((program) =>
       program.id === editingProgram.id
         ? {
-            ...program,
-            name: formData.name,
-            description: formData.description,
-            schedule: formData.schedule,
-            location: formData.location,
-            capacity: parseInt(formData.capacity) || 20,
-          }
+          ...program,
+          name: formData.name,
+          description: formData.description,
+          schedule: formData.schedule,
+          location: formData.location,
+          capacity: parseInt(formData.capacity) || 20,
+        }
         : program
     );
 
@@ -360,28 +360,34 @@ export function TeacherPrograms({ programs, setPrograms }: TeacherProgramsProps)
 
       {/* Student List Dialog */}
       <Dialog open={!!selectedProgram} onOpenChange={() => setSelectedProgram(null)}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle>{selectedProgram?.name}</DialogTitle>
-            <DialogDescription>
-              수강생 {selectedProgram?.enrolled}명 / 정원 {selectedProgram?.capacity}명
+        <DialogContent className="w-full max-w-md h-[65vh] flex flex-col">
+          <DialogHeader className="pb-2">
+            <DialogTitle className="text-sm">{selectedProgram?.name}</DialogTitle>
+            <DialogDescription className="text-xs text-gray-500">
+              {selectedProgram?.enrolled} / {selectedProgram?.capacity}명
             </DialogDescription>
           </DialogHeader>
-          <div className="space-y-2">
+
+          <div className="flex-1 overflow-y-auto space-y-1 mt-1">
             {Array.from({ length: selectedProgram?.enrolled || 0 }, (_, i) => {
-              const programColor = selectedProgram ? getProgramColor(selectedProgram.id) : { bg: 'bg-gray-50', border: 'border-gray-200' };
+              const programColor = selectedProgram
+                ? getProgramColor(selectedProgram.id)
+                : { bg: "bg-gray-50", border: "border-gray-200" };
+
               const studentName = studentNames[i % studentNames.length];
+
               return (
                 <div
                   key={i}
-                  className={`flex items-center justify-between p-3 rounded-lg border ${programColor.bg} ${programColor.border}`}
+                  className={`flex items-center justify-between p-1 rounded border text-xs ${programColor.bg} ${programColor.border}`}
                 >
                   <div>
-                    <p className="text-sm">{studentName}</p>
-                    <p className="text-xs text-gray-600">2024010{i + 1}</p>
+                    <p className="truncate">{studentName}</p>
+                    <p className="text-[10px] text-gray-500">2024010{i + 1}</p>
                   </div>
-                  <Button variant="outline" size="sm">
-                    출석 체크
+
+                  <Button variant="outline" size="sm" className="px-1 py-0.5 text-[10px]">
+                    출석
                   </Button>
                 </div>
               );
@@ -389,6 +395,8 @@ export function TeacherPrograms({ programs, setPrograms }: TeacherProgramsProps)
           </div>
         </DialogContent>
       </Dialog>
+
+
     </div>
   );
 }
