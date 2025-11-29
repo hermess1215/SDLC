@@ -1,217 +1,63 @@
-import { useState } from 'react';
+// AdminPrograms.tsx
+import { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { Badge } from './ui/badge';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from './ui/dialog';
-import { Search, Users, Calendar, MapPin, CheckCircle, XCircle, Eye } from 'lucide-react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from './ui/dialog';
+import { Search, Users, Calendar, MapPin, Eye, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
-import { Trash2 } from 'lucide-react';
-
-interface Program {
-  id: number;
-  name: string;
-  teacher: string;
-  description: string;
-  schedule: string;
-  location: string;
-  capacity: number;
-  enrolled: number;
-  status: 'active' | 'pending' | 'inactive';
-}
-
-// 학생 mock 데이터
-const studentNames = [
-  '김민준', '이서연', '박지호', '최수아', '정예준',
-  '강하은', '조윤서', '윤지우', '장서준', '임채원',
-  '한지민', '오시우', '신유나', '권도현', '송하린',
-  '배준서', '홍지안', '노아인', '황민서', '서은우'
-];
-
-// 각 프로그램마다 다른 색상을 반환하는 함수
-const getProgramColor = (programId: number) => {
-  const colors = [
-    { bg: 'bg-blue-50', border: 'border-blue-200' },
-    { bg: 'bg-purple-50', border: 'border-purple-200' },
-    { bg: 'bg-green-50', border: 'border-green-200' },
-    { bg: 'bg-orange-50', border: 'border-orange-200' },
-    { bg: 'bg-pink-50', border: 'border-pink-200' },
-    { bg: 'bg-cyan-50', border: 'border-cyan-200' },
-  ];
-  return colors[programId % colors.length];
-};
+import { programApi, ProgramData, StudentData } from '../api/AdminProgramApi';
 
 export function AdminPrograms() {
+  const [programsList, setProgramsList] = useState<ProgramData[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedProgram, setSelectedProgram] = useState<Program | null>(null);
+  const [selectedProgram, setSelectedProgram] = useState<ProgramData | null>(null);
+  const [students, setStudents] = useState<StudentData[]>([]);
   const [showStudentList, setShowStudentList] = useState(false);
-  const [programsList, setProgramsList] = useState<Program[]>([
-    {
-      id: 1,
-      name: '코딩 교실',
-      teacher: '김선생님',
-      description: '파이썬 기초부터 프로젝트까지 배우는 코딩 수업입니다.',
-      schedule: '월, 수, 금 15:00-16:30',
-      location: '컴퓨터실',
-      capacity: 20,
-      enrolled: 15,
-      status: 'active',
-    },
-    {
-      id: 2,
-      name: '드론 조종 교실',
-      teacher: '정선생님',
-      description: '드론의 원리를 배우고 직접 조종해보는 수업입니다.',
-      schedule: '화, 목 16:00-17:30',
-      location: '운동장',
-      capacity: 15,
-      enrolled: 0,
-      status: 'pending',
-    },
-    {
-      id: 3,
-      name: '미술 동아리',
-      teacher: '이선생님',
-      description: '다양한 미술 기법을 배우고 작품을 만들어봅니다.',
-      schedule: '월, 목 16:00-17:30',
-      location: '미술실',
-      capacity: 15,
-      enrolled: 12,
-      status: 'active',
-    },
-    {
-      id: 4,
-      name: '영어 회화',
-      teacher: '박선생님',
-      description: '원어민과 함께하는 실전 영어 회화 수업입니다.',
-      schedule: '화, 목 15:30-17:00',
-      location: '영어교실',
-      capacity: 12,
-      enrolled: 10,
-      status: 'active',
-    },
-    {
-      id: 5,
-      name: '3D 프린팅',
-      teacher: '한선생님',
-      description: '3D 모델링과 프린팅을 배우는 수업입니다.',
-      schedule: '수, 금 16:00-17:30',
-      location: 'STEAM실',
-      capacity: 12,
-      enrolled: 0,
-      status: 'pending',
-    },
-  ]);
 
-  const activePrograms = programsList.filter((p) => p.status === 'active');
-  const pendingPrograms = programsList.filter((p) => p.status === 'pending');
+  // 컴포넌트 마운트 시 프로그램 목록 불러오기
+  useEffect(() => {
+    programApi.getPrograms()
+      .then(setProgramsList)
+      .catch((err) => {
+        console.error(err);
+        toast.error('프로그램 목록을 가져오는 데 실패했습니다.');
+      });
+  }, []);
 
-  const filteredPrograms = (list: Program[]) =>
-    list.filter(
-      (program) =>
-        program.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        program.teacher.toLowerCase().includes(searchQuery.toLowerCase())
-    );
-
-  const handleApprove = (program: Program) => {
-    const updatedPrograms = programsList.map((p) =>
-      p.id === program.id ? { ...p, status: 'active' as const } : p
-    );
-    setProgramsList(updatedPrograms);
-    toast.success(`${program.name} 프로그램이 승인되었습니다`);
-    setSelectedProgram(null);
+  // 삭제 안내
+  const handleDeleteProgram = (program: ProgramData) => {
+    toast('삭제 기능은 현재 비활성화되어 있습니다.');
   };
 
-  const handleReject = (program: Program) => {
-    if (confirm(`"${program.name}" 프로그램을 반려하시겠습니까?`)) {
-      const updatedPrograms = programsList.filter((p) => p.id !== program.id);
-      setProgramsList(updatedPrograms);
-      toast.error(`${program.name} 프로그램이 반려되었습니다`);
-      setSelectedProgram(null);
+  const handleViewStudents = async (program: ProgramData) => {
+    setSelectedProgram(program);
+    try {
+      const studentList = await programApi.getProgramStudents(program.classId);
+      setStudents(studentList);
+      setShowStudentList(true);
+    } catch (error) {
+      console.error(error);
+      toast.error('수강생 목록을 가져오는 데 실패했습니다.');
     }
   };
 
-  const handleDeleteProgram = (program: Program) => {
-    if (confirm(`"${program.name}" 프로그램을 삭제하시겠습니까?\n삭제 후 복구할 수 없습니다.`)) {
-      const updatedPrograms = programsList.filter((p) => p.id !== program.id);
-      setProgramsList(updatedPrograms);
-      toast.success('프로그램이 삭제되었습니다');
-      setSelectedProgram(null);
-      setShowStudentList(false);
-    }
-  };
-
-  const handleViewStudents = (program: Program) => {
-    setShowStudentList(true);
-  };
-
-  const getStatusBadge = (status: string) => {
-    switch (status) {
-      case 'active':
-        return <Badge className="bg-green-500">운영중</Badge>;
-      case 'pending':
-        return <Badge className="bg-orange-500">승인대기</Badge>;
-      default:
-        return <Badge variant="outline">비활성</Badge>;
-    }
-  };
-
-  const renderProgramCard = (program: Program) => (
-    <Card
-      key={program.id}
-      className="hover:shadow-md transition-shadow"
-    >
-      <CardHeader className="pb-3">
-        <div className="flex items-start justify-between">
-          <div className="flex-1 cursor-pointer" onClick={() => setSelectedProgram(program)}>
-            <CardTitle className="text-base">{program.name}</CardTitle>
-            <p className="text-sm text-gray-600 mt-1">{program.teacher}</p>
-          </div>
-          <div className="flex items-center gap-2">
-            <div className="flex flex-col items-end gap-1">
-              {getStatusBadge(program.status)}
-            </div>
-            <Button
-              variant="outline"
-              size="sm"
-              className="text-red-500 hover:bg-red-50 hover:border-red-300"
-              onClick={(e) => {
-                e.stopPropagation();
-                handleDeleteProgram(program);
-              }}
-            >
-              <Trash2 className="w-4 h-4" />
-            </Button>
-          </div>
-        </div>
-      </CardHeader>
-      <CardContent className="space-y-2 cursor-pointer" onClick={() => setSelectedProgram(program)}>
-        <p className="text-sm text-gray-700">{program.description}</p>
-        <div className="flex items-center gap-4 text-sm text-gray-600">
-          <div className="flex items-center gap-1">
-            <Users className="w-4 h-4" />
-            <span>
-              {program.enrolled}/{program.capacity}
-            </span>
-          </div>
-          <div className="flex items-center gap-1">
-            <Calendar className="w-4 h-4" />
-            <span>{program.schedule.split(' ')[0]}</span>
-          </div>
-        </div>
-      </CardContent>
-    </Card>
+  const filteredPrograms = programsList.filter(
+    (program) =>
+      program.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      program.teacherName.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   return (
     <div className="p-4 space-y-4">
+      {/* 검색창 */}
       <div className="sticky top-0 bg-gray-50 pb-2 z-10">
         <h2 className="mb-3">프로그램 관리</h2>
         <div className="relative">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
           <Input
-            placeholder="프로그램, 선생님, 카테고리 검색..."
+            placeholder="프로그램, 선생님 검색..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="pl-10"
@@ -219,120 +65,113 @@ export function AdminPrograms() {
         </div>
       </div>
 
+      {/* 프로그램 카드 리스트 */}
       <div className="space-y-3">
-        {filteredPrograms(activePrograms).map(renderProgramCard)}
+        {filteredPrograms.map((program) => {
+          return (
+            <Card key={program.classId} className="hover:shadow-md transition-shadow">
+              <CardHeader className="pb-3 flex justify-between items-start">
+                <div className="flex-1 cursor-pointer" onClick={() => setSelectedProgram(program)}>
+                  <CardTitle>{program.title}</CardTitle>
+                  <p className="text-sm text-gray-600 mt-1">{program.teacherName}</p>
+                </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="text-red-500 hover:bg-red-50 hover:border-red-300"
+                  onClick={(e) => { e.stopPropagation(); handleDeleteProgram(program); }}
+                >
+                  <Trash2 className="w-4 h-4" />
+                </Button>
+              </CardHeader>
+              <CardContent
+                className={'space-y-2 cursor-pointer'}
+                onClick={() => setSelectedProgram(program)}
+              >
+                <p className="text-sm text-gray-700">{program.description}</p>
+                <div className="flex items-center gap-4 text-sm text-gray-600">
+                  <div className="flex items-center gap-1">
+                    <Users className="w-4 h-4" />
+                    <span>{program.currentCount}/{program.capacity}</span>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <Calendar className="w-4 h-4" />
+                    <span>{program.schedules[0]?.dayOfWeek}</span>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          );
+        })}
       </div>
 
-      {/* Program Detail Dialog */}
+      {/* 프로그램 상세 모달 */}
       <Dialog open={!!selectedProgram} onOpenChange={() => setSelectedProgram(null)}>
         <DialogContent className="max-w-md">
           <DialogHeader>
-            <DialogTitle>{selectedProgram?.name}</DialogTitle>
-            <DialogDescription>
-              {selectedProgram?.teacher} · {getStatusBadge(selectedProgram?.status || 'active')}
-            </DialogDescription>
+            <DialogTitle>{selectedProgram?.title}</DialogTitle>
+            <DialogDescription>{selectedProgram?.teacherName}</DialogDescription>
           </DialogHeader>
+
           {selectedProgram && (
             <div className="space-y-4">
-              <div>
-                <h3 className="text-sm mb-1">프로그램 설명</h3>
-                <p className="text-sm text-gray-700">{selectedProgram.description}</p>
-              </div>
-              <div className="space-y-2">
-                <div className="flex items-center gap-2 text-sm">
+              <p className="text-sm text-gray-700">{selectedProgram.description}</p>
+              <div className="flex flex-col gap-2 text-sm">
+                <div className="flex items-center gap-2">
                   <Calendar className="w-4 h-4 text-gray-600" />
-                  <span>{selectedProgram.schedule}</span>
-                </div>
-                <div className="flex items-center gap-2 text-sm">
-                  <MapPin className="w-4 h-4 text-gray-600" />
-                  <span>{selectedProgram.location}</span>
-                </div>
-                <div className="flex items-center gap-2 text-sm">
-                  <Users className="w-4 h-4 text-gray-600" />
                   <span>
-                    {selectedProgram.enrolled}/{selectedProgram.capacity}명 수강 중
+                    {selectedProgram.schedules.map((s) => `${s.dayOfWeek} ${s.startTime}-${s.endTime}`).join(', ')}
                   </span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <MapPin className="w-4 h-4 text-gray-600" />
+                  <span>{selectedProgram.classLocation}</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Users className="w-4 h-4 text-gray-600" />
+                  <span>{selectedProgram.currentCount}/{selectedProgram.capacity}명 수강 중</span>
                 </div>
               </div>
 
-              {selectedProgram.status === 'pending' ? (
-                <div className="flex gap-2">
-                  <Button
-                    className="flex-1 bg-green-500 hover:bg-green-600"
-                    onClick={() => handleApprove(selectedProgram)}
-                  >
-                    <CheckCircle className="w-4 h-4 mr-1" />
-                    승인
-                  </Button>
-                  <Button
-                    variant="outline"
-                    className="flex-1 text-red-500 border-red-500 hover:bg-red-50"
-                    onClick={() => handleReject(selectedProgram)}
-                  >
-                    <XCircle className="w-4 h-4 mr-1" />
-                    반려
-                  </Button>
-                </div>
-              ) : (
-                <Button
-                  className="w-full bg-blue-500 hover:bg-blue-600"
-                  onClick={() => handleViewStudents(selectedProgram)}
-                >
-                  <Eye className="w-4 h-4 mr-1" />
-                  수강생 목록 보기
-                </Button>
-              )}
+              <Button
+                className="w-full bg-blue-500 hover:bg-blue-600 mt-2"
+                onClick={() => handleViewStudents(selectedProgram)}
+              >
+                <Eye className="w-4 h-4 mr-1" />
+                수강생 목록 보기
+              </Button>
             </div>
           )}
         </DialogContent>
       </Dialog>
 
-      {/* Student List Dialog */}
+      {/* 수강생 목록 모달 */}
       <Dialog open={showStudentList} onOpenChange={setShowStudentList}>
-        <DialogContent
-          className="w-full max-w-md h-[65vh] flex flex-col"
-        >
-          {/* Header (고정 영역) */}
+        <DialogContent className="w-full max-w-md h-[65vh] flex flex-col">
           <DialogHeader className="pb-2">
-            <DialogTitle className="text-sm">{selectedProgram?.name}</DialogTitle>
+            <DialogTitle className="text-sm">{selectedProgram?.title}</DialogTitle>
             <DialogDescription className="text-xs text-gray-500">
-              수강생 {selectedProgram?.enrolled}명 / 정원 {selectedProgram?.capacity}명
+              수강생 {students.length}명 / 정원 {selectedProgram?.capacity}명
             </DialogDescription>
           </DialogHeader>
 
-          {/* Scroll 영역 (가변) */}
           <div className="flex-1 overflow-y-auto space-y-1 mt-1">
-            {Array.from({ length: selectedProgram?.enrolled || 0 }, (_, i) => {
-              const programColor = selectedProgram
-                ? getProgramColor(selectedProgram.id)
-                : { bg: "bg-gray-50", border: "border-gray-200" };
-
-              const studentName = studentNames[i % studentNames.length];
-
-              return (
+            {students.length > 0 ? (
+              students.map((student) => (
                 <div
-                  key={i}
-                  className={`flex items-center justify-between p-1 rounded border text-xs ${programColor.bg} ${programColor.border}`}
+                  key={student.studentId}
+                  className="flex items-center justify-between p-1 rounded border text-xs"
                 >
                   <div>
-                    <p className="truncate">{studentName}</p>
-                    <p className="text-[10px] text-gray-500">2024010{i + 1}</p>
+                    <p className="truncate">{student.name}</p>
+                    <p className="text-[10px] text-gray-500">{student.email}</p>
                   </div>
-
                   <Badge variant="outline" className="bg-white text-[11px] px-2 py-0.5">
-                    {selectedProgram?.name.includes("코딩")
-                      ? "1학년"
-                      : selectedProgram?.name.includes("미술")
-                        ? "2학년"
-                        : selectedProgram?.name.includes("영어")
-                          ? "3학년"
-                          : "1학년"}
+                    {student.grade}학년
                   </Badge>
                 </div>
-              );
-            })}
-
-            {selectedProgram?.enrolled === 0 && (
+              ))
+            ) : (
               <div className="text-center py-10 text-gray-500">
                 <Users className="w-10 h-10 mx-auto mb-2 text-gray-400" />
                 <p className="text-sm">아직 수강생이 없습니다</p>
@@ -340,7 +179,6 @@ export function AdminPrograms() {
             )}
           </div>
 
-          {/* Footer (고정 영역) */}
           <div className="p-4 pt-2 shrink-0">
             <Button
               variant="outline"

@@ -13,7 +13,7 @@ import {
 } from './ui/alert-dialog';
 import { Search, Users, Calendar, MapPin, CheckCircle, XCircle, Loader2 } from 'lucide-react';
 import type { EnrolledProgram } from '../App';
-import { programApi, ProgramApiData } from '../api/ProgramApi';
+import { programApi, ProgramApiData } from '../api/StudentProgramApi';
 import { toast } from 'sonner';
 
 // API 응답 구조를 기반으로 컴포넌트에서 사용할 Program 타입 정의
@@ -306,11 +306,11 @@ export function StudentPrograms({ onEnrollProgram, enrolledPrograms }: StudentPr
                   {resultDialog.program ? (
                     enrolledPrograms.some(p => p.id === resultDialog.program!.classId) ? (
                       <>
-                        <span className="text-gray-900">{resultDialog.program.title}</span>은(는) 이미 신청된 프로그램입니다.
+                        <span className="text-gray-900">{resultDialog.program.title}</span>은(는) 정원이 마감되었습니다.
                       </>
                     ) : (
                       <>
-                        <span className="text-gray-900">{resultDialog.program.title}</span>은(는) 정원이 마감되었습니다.
+                        <span className="text-gray-900">{resultDialog.program.title}</span>은(는) 이미 신청한 프로그램입니다.
                       </>
                     )
                   ) : (
