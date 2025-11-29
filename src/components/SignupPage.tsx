@@ -125,11 +125,6 @@ export function SignupPage({ onSignup, onBackToLogin }: SignupPageProps) {
     return;
   }
 
-  if (adminData.authCode !== 'ADMIN2025') {
-    toast.error('유효하지 않은 초대 코드입니다');
-    return;
-  }
-
   try {
     const response = await signupApi.adminSignup({
       name: adminData.name,

@@ -1,40 +1,63 @@
+// src/components/StudentHome.tsx
+import { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Badge } from './ui/badge';
-import { Clock, BookOpen, Calendar } from 'lucide-react';
-import type { User, EnrolledProgram } from '../App';
+import { Clock, BookOpen } from 'lucide-react';
+import { takingApi, TakingClassData } from '../api/TakingApi';
 
-interface StudentHomeProps {
-  user: User;
-  enrolledPrograms: EnrolledProgram[];
-}
+export function StudentHome() {
+  const [myClasses, setMyClasses] = useState<TakingClassData[]>([]);
+  const [loading, setLoading] = useState(true);
 
-export function StudentHome({ user, enrolledPrograms }: StudentHomeProps) {
-  // 오늘의 요일 가져오기
+  // 영어 요일 → 한국어 요일 매핑
+  const dayMap: Record<string, string> = {
+    MON: '월',
+    TUE: '화',
+    WED: '수',
+    THU: '목',
+    FRI: '금',
+    SAT: '토',
+    SUN: '일',
+  };
+
   const today = new Date();
-  const daysOfWeek = ['일', '월', '화', '수', '목', '금', '토'];
-  const todayKorean = daysOfWeek[today.getDay()];
+  const todayKorean = ['일', '월', '화', '수', '목', '금', '토'][today.getDay()];
+
+  useEffect(() => {
+    async function fetchClasses() {
+      try {
+        const data = await takingApi.getMyClasses();
+        setMyClasses(data);
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchClasses();
+  }, []);
 
   // 오늘 수업 필터링
-  const todayClasses = enrolledPrograms
-    .filter(program => program.day.includes(todayKorean))
-    .map(program => ({
-      id: program.id,
-      name: program.name,
-      time: program.schedule.split(' ').slice(1).join(' '),
-      location: program.location,
-    }));
+  const todayClasses = myClasses
+    .map(cls => {
+      const todaySchedule = cls.schedules.find(s => dayMap[s.dayOfWeek] === todayKorean);
+      if (!todaySchedule) return null;
+
+      return {
+        id: cls.classId,
+        name: cls.title,
+        location: cls.classLocation,
+        time: `${todaySchedule.startTime} ~ ${todaySchedule.endTime}`,
+      };
+    })
+    .filter(Boolean) as {
+      id: number;
+      name: string;
+      location: string;
+      time: string;
+    }[];
 
   return (
     <div className="p-4 space-y-4">
-      {/* Welcome Banner */}
-      <Card className="bg-gradient-to-r from-blue-500 to-purple-600 text-white border-0">
-        <CardContent className="pt-6">
-          <h2 className="mb-2">안녕하세요, {user.name}님!</h2>
-          <p className="text-blue-100">오늘도 즐거운 방과후 활동 되세요</p>
-        </CardContent>
-      </Card>
-
-      {/* Today's Classes */}
+      {/* 오늘 수업 */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
@@ -43,24 +66,28 @@ export function StudentHome({ user, enrolledPrograms }: StudentHomeProps) {
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-3">
-          {todayClasses.map((classItem) => (
-            <div
-              key={classItem.id}
-              className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
-            >
-              <div>
-                <p>{classItem.name}</p>
-                <p className="text-sm text-gray-600">{classItem.location}</p>
+          {loading ? (
+            <p className="text-gray-500 text-sm">로딩 중...</p>
+          ) : todayClasses.length > 0 ? (
+            todayClasses.map(classItem => (
+              <div
+                key={classItem.id}
+                className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
+              >
+                <div>
+                  <p>{classItem.name}</p>
+                  <p className="text-sm text-gray-600">{classItem.location}</p>
+                </div>
+                <div className="text-right text-sm">{classItem.time}</div>
               </div>
-              <div className="text-right">
-                <p className="text-sm">{classItem.time}</p>
-              </div>
-            </div>
-          ))}
+            ))
+          ) : (
+            <p className="text-gray-500 text-sm">오늘은 수업이 없습니다.</p>
+          )}
         </CardContent>
       </Card>
 
-      {/* My Programs */}
+      {/* 수강 중인 프로그램 */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
@@ -69,17 +96,25 @@ export function StudentHome({ user, enrolledPrograms }: StudentHomeProps) {
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-3">
-          {enrolledPrograms.length > 0 ? (
-            enrolledPrograms.map((program) => (
+          {loading ? (
+            <p className="text-gray-500 text-sm">로딩 중...</p>
+          ) : myClasses.length > 0 ? (
+            myClasses.map(cls => (
               <div
-                key={program.id}
+                key={cls.classId}
                 className="p-3 border rounded-lg hover:border-blue-500 transition-colors"
               >
                 <div className="flex items-start justify-between mb-2">
-                  <p>{program.name}</p>
-                  <Badge variant="outline">{program.day}</Badge>
+                  <p>{cls.title}</p>
+                  <div className="flex gap-1">
+                    {cls.schedules.map((s, idx) => (
+                      <Badge key={idx} variant="outline">
+                        {dayMap[s.dayOfWeek]}
+                      </Badge>
+                    ))}
+                  </div>
                 </div>
-                <p className="text-sm text-gray-600">{program.teacher}</p>
+                <p className="text-sm text-gray-600">{cls.teacherName}</p>
               </div>
             ))
           ) : (

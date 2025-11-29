@@ -20,7 +20,7 @@ export const signupApi = {
       email: data.email,
       password: data.password,
       name: data.name,
-      phoneNumber: data.phone,
+      phoneNumber: data.phoneNumber,
       authCode: data.authCode,  // inviteCode → authCode
     });
     return response.data;

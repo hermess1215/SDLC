@@ -34,14 +34,6 @@ export function TeacherHome({ user }: TeacherHomeProps) {
 
   return (
     <div className="p-4 space-y-4">
-      {/* Welcome Banner */}
-      <Card className="bg-gradient-to-r from-blue-500 to-purple-600 text-white border-0">
-        <CardContent className="pt-6">
-          <h2 className="mb-2">{user.name} 선생님</h2>
-          <p className="text-blue-100">오늘도 좋은 하루 되세요!</p>
-        </CardContent>
-      </Card>
-
       {/* Stats */}
       <div className="grid grid-cols-3 gap-3">
         {stats.map((stat, index) => (
