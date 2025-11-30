@@ -1,10 +1,9 @@
-import { useState, useEffect } from 'react';
-import { getPrograms, getStudentsByProgram } from '../api/getProgram';
+// TeacherPrograms.tsx
+import { useState } from 'react';
 import { createProgram } from '../api/createProgram';
 import { deleteProgram } from '../api/deleteProgram';
-import { updateProgram } from '../api/updateProgramApi'; // 🔥 수정 API
-
-import type { Program } from '../api/types';
+import { updateProgram } from '../api/updateProgramApi';
+import type { Program } from '../api/TeacherProgramApi';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
@@ -16,7 +15,7 @@ import {
   DialogDescription,
   DialogHeader,
   DialogTitle,
-  DialogTrigger
+  DialogTrigger,
 } from './ui/dialog';
 import { Badge } from './ui/badge';
 import { Plus, Users, Calendar, MapPin, Trash2 } from 'lucide-react';
@@ -24,44 +23,34 @@ import { toast } from 'sonner';
 
 const DAY_OPTIONS = ["MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN"];
 
-export function TeacherPrograms() {
-  const [programs, setPrograms] = useState<Program[]>([]);
+interface TeacherProgramsProps {
+  programs: Program[];
+  setPrograms: React.Dispatch<React.SetStateAction<Program[]>>;
+  fetchPrograms: () => Promise<void>;
+}
+
+export function TeacherPrograms({ programs, setPrograms, fetchPrograms }: TeacherProgramsProps) {
   const [selectedProgram, setSelectedProgram] = useState<Program | null>(null);
   const [openCreate, setOpenCreate] = useState(false);
   const [editingProgram, setEditingProgram] = useState<Program | null>(null);
   const [openEdit, setOpenEdit] = useState(false);
 
   const [newProgram, setNewProgram] = useState({
-    classId: '',
     title: '',
     description: '',
     classLocation: '',
     capacity: 15,
-    schedules: [
-      { dayOfWeek: 'MON', startTime: '15:00', endTime: '16:00' }
-    ]
+    schedules: [{ dayOfWeek: 'MON', startTime: '15:00', endTime: '16:00' }],
   });
 
   const [students, setStudents] = useState<any[]>([]);
-
-  useEffect(() => {
-    const fetchPrograms = async () => {
-      try {
-        const data = await getPrograms();
-        setPrograms(data);
-      } catch (err) {
-        console.error(err);
-        toast.error('프로그램 목록을 불러오지 못했습니다.');
-      }
-    };
-    fetchPrograms();
-  }, []);
 
   // ===========================
   // ⭐ 학생 목록 조회
   // ===========================
   const handleViewStudents = async (program: Program) => {
     try {
+      const { getStudentsByProgram } = await import('../api/getProgram');
       const list = await getStudentsByProgram(program.classId);
       setStudents(list);
       setSelectedProgram(program);
@@ -81,18 +70,27 @@ export function TeacherPrograms() {
         description: newProgram.description,
         capacity: Number(newProgram.capacity),
         classLocation: newProgram.classLocation,
-        schedules: newProgram.schedules.map((s) => ({
-          dayOfWeek: s.dayOfWeek as "MON" | "TUE" | "WED" | "THU" | "FRI" | "SAT" | "SUN",
-          startTime: s.startTime,
-          endTime: s.endTime,
-        })),
+        schedules: newProgram.schedules,
       };
 
-      await createProgram(payload);
+      const created = await createProgram({
+        ...payload,
+        schedules: payload.schedules.map(s => ({
+          ...s,
+          dayOfWeek: s.dayOfWeek as
+            | "MON"
+            | "TUE"
+            | "WED"
+            | "THU"
+            | "FRI"
+            | "SAT"
+            | "SUN",
+        })),
+      });
+
       toast('프로그램이 생성되었습니다.');
 
-      const data = await getPrograms();
-      setPrograms(data);
+      await fetchPrograms();
       setOpenCreate(false);
     } catch (err) {
       console.error(err);
@@ -107,7 +105,7 @@ export function TeacherPrograms() {
     try {
       await deleteProgram(classId);
       toast('프로그램이 삭제되었습니다.');
-      setPrograms((prev) => prev.filter((p) => p.classId !== classId));
+      await fetchPrograms();
     } catch (err) {
       console.error(err);
       toast.error('프로그램 삭제에 실패했습니다.');
@@ -118,7 +116,10 @@ export function TeacherPrograms() {
   // ⭐ 프로그램 수정
   // ===========================
   const handleEditProgram = (program: Program) => {
-    setEditingProgram({ ...program, schedules: [...program.schedules] });
+    setEditingProgram({
+      ...program,
+      schedules: [...(program.schedules ?? [])], // 안전 처리
+    });
     setOpenEdit(true);
   };
 
@@ -131,18 +132,14 @@ export function TeacherPrograms() {
         description: editingProgram.description,
         capacity: Number(editingProgram.capacity),
         classLocation: editingProgram.classLocation,
-        schedules: editingProgram.schedules.map((s) => ({
-          dayOfWeek: s.dayOfWeek as "MON" | "TUE" | "WED" | "THU" | "FRI" | "SAT" | "SUN",
-          startTime: s.startTime,
-          endTime: s.endTime
-        }))
+        schedules: editingProgram.schedules ?? [],
       };
 
-      await updateProgram(editingProgram.classId, payload);
+      const updated = await updateProgram(editingProgram.classId, payload);
+
       toast('프로그램이 수정되었습니다.');
 
-      const data = await getPrograms();
-      setPrograms(data);
+      await fetchPrograms();
       setOpenEdit(false);
     } catch (err) {
       console.error(err);
@@ -220,9 +217,7 @@ export function TeacherPrograms() {
                   onChange={(e) =>
                     setNewProgram({
                       ...newProgram,
-                      schedules: [
-                        { ...newProgram.schedules[0], dayOfWeek: e.target.value }
-                      ]
+                      schedules: [{ ...newProgram.schedules[0], dayOfWeek: e.target.value as any }],
                     })
                   }
                 >
@@ -241,9 +236,7 @@ export function TeacherPrograms() {
                     onChange={(e) =>
                       setNewProgram({
                         ...newProgram,
-                        schedules: [
-                          { ...newProgram.schedules[0], startTime: e.target.value }
-                        ]
+                        schedules: [{ ...newProgram.schedules[0], startTime: e.target.value }],
                       })
                     }
                   />
@@ -257,9 +250,7 @@ export function TeacherPrograms() {
                     onChange={(e) =>
                       setNewProgram({
                         ...newProgram,
-                        schedules: [
-                          { ...newProgram.schedules[0], endTime: e.target.value }
-                        ]
+                        schedules: [{ ...newProgram.schedules[0], endTime: e.target.value }],
                       })
                     }
                   />
@@ -315,7 +306,7 @@ export function TeacherPrograms() {
               <p className="text-sm text-gray-700">{program.description}</p>
 
               <div className="flex flex-col gap-1 text-sm text-gray-600">
-                {program.schedules.map((s, idx) => (
+                {(program.schedules ?? []).map((s, idx) => (
                   <div key={idx} className="flex items-center gap-2">
                     <Calendar className="w-4 h-4" />
                     <span>{`${s.dayOfWeek} ${s.startTime}-${s.endTime}`}</span>
@@ -426,17 +417,11 @@ export function TeacherPrograms() {
                 <Label>요일</Label>
                 <select
                   className="border rounded p-2 w-full"
-                  value={newProgram.schedules[0].dayOfWeek}
+                  value={editingProgram.schedules[0].dayOfWeek}
                   onChange={(e) =>
-                    setNewProgram({
-                      ...newProgram,
-                      schedules: [
-                        {
-                          ...newProgram.schedules[0],
-                          dayOfWeek: e.target.value as
-                            "MON" | "TUE" | "WED" | "THU" | "FRI" | "SAT" | "SUN"
-                        }
-                      ]
+                    setEditingProgram({
+                      ...editingProgram,
+                      schedules: [{ ...editingProgram.schedules[0], dayOfWeek: e.target.value as any }],
                     })
                   }
                 >
@@ -446,7 +431,6 @@ export function TeacherPrograms() {
                     </option>
                   ))}
                 </select>
-
               </div>
 
               <div className="flex gap-2">
@@ -458,9 +442,7 @@ export function TeacherPrograms() {
                     onChange={(e) =>
                       setEditingProgram({
                         ...editingProgram,
-                        schedules: [
-                          { ...editingProgram.schedules[0], startTime: e.target.value }
-                        ]
+                        schedules: [{ ...editingProgram.schedules[0], startTime: e.target.value }],
                       })
                     }
                   />
@@ -474,9 +456,7 @@ export function TeacherPrograms() {
                     onChange={(e) =>
                       setEditingProgram({
                         ...editingProgram,
-                        schedules: [
-                          { ...editingProgram.schedules[0], endTime: e.target.value }
-                        ]
+                        schedules: [{ ...editingProgram.schedules[0], endTime: e.target.value }],
                       })
                     }
                   />

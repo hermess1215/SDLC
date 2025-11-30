@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { getAnnouncements } from "../api/announcement"; 
+import { getAnnouncements } from "../api/StudentAnnouncement"; 
 import "../styles/StudentNotice.css";
 
 interface Announcement {
@@ -8,7 +8,7 @@ interface Announcement {
   teacherName: string;
   title: string;
   content: string;
-  noticeType: "COMMON" | "CANCEL";
+  noticeType: "COMMON" | "CANCELED" | "CHANGE";
   createdAt: string;
 }
 
@@ -24,13 +24,21 @@ export function StudentNotice() {
   }, []);
 
   const getTypeStyle = (type: string) => {
-    if (type === "CANCEL") {
+    if (type === "CANCELED") {
       return {
         icon: "❗",
         tag: "휴강",
         color: "#E74C3C",
         bg: "#FDEDEC",
       };
+    }
+    else if (type === "CHANGE"){
+      return {
+        icon: "ℹ️",
+        tag: "일정 변경",
+        color: "#e79d3cff",
+        gb: "#FDEDEC"
+      }
     }
     return {
       icon: "ℹ️",

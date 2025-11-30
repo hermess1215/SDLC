@@ -1,35 +1,74 @@
+// TeacherHome.tsx
+import { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Badge } from './ui/badge';
-import { BookOpen, Users, Calendar, TrendingUp } from 'lucide-react';
-import type { User } from '../App';
+import { BookOpen, Users, Calendar } from 'lucide-react';
+import { teacherApi, Classes } from '../api/TeacherHomeApi';
 
-interface TeacherHomeProps {
-  user: User;
+interface TodayClass {
+  id: number;
+  name: string;
+  time: string;
+  students: number;
+  location: string;
+  status?: 'active' | 'cancelled';
 }
 
-export function TeacherHome({ user }: TeacherHomeProps) {
-  const stats = [
-    { label: '운영 중인 프로그램', value: '3', icon: BookOpen, color: 'bg-blue-500' },
-    { label: '총 수강생', value: '42', icon: Users, color: 'bg-green-500' },
-    { label: '이번 주 수업', value: '9', icon: Calendar, color: 'bg-purple-500' },
-  ];
+export function TeacherHome() {
+  const [programCount, setProgramCount] = useState(0);
+  const [studentCount, setStudentCount] = useState(0);
+  const [thisWeekClasses, setThisWeekClasses] = useState(0);
+  const [todayClasses, setTodayClasses] = useState<TodayClass[]>([]);
 
-  const todayClasses = [
-    {
-      id: 1,
-      name: '코딩 교실',
-      time: '15:00 - 16:30',
-      students: 15,
-      location: '컴퓨터실',
-    },
-    {
-      id: 2,
-      name: '과학 실험반',
-      time: '15:00 - 16:30',
-      students: 14,
-      location: '과학실',
-      status: 'cancelled',
-    },
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        // 1️⃣ 모든 수업 가져오기
+        const classes: Classes[] = await teacherApi.getAllClasses();
+
+        // 통계 계산
+        setProgramCount(classes.length);
+        setStudentCount(classes.reduce((sum, c) => sum + c.currentCount, 0));
+
+        const today = new Date();
+        const dayOfWeekStr = ['SUN','MON','TUE','WED','THU','FRI','SAT'][today.getDay()];
+
+        const todayFiltered: TodayClass[] = [];
+
+        classes.forEach((cls) => {
+          cls.schedules.forEach((s) => {
+            if (s.dayOfWeek === dayOfWeekStr) {
+              todayFiltered.push({
+                id: cls.classId,
+                name: cls.title,
+                time: `${s.startTime} - ${s.endTime}`,
+                students: cls.currentCount,
+                location: cls.classLocation,
+                status: 'active'
+              });
+            }
+          });
+        });
+
+        setTodayClasses(todayFiltered);
+
+        // 이번 주 수업 수
+        setThisWeekClasses(
+          classes.reduce((count, cls) => count + cls.schedules.length, 0)
+        );
+
+      } catch (err) {
+        console.error('대시보드 불러오기 실패', err);
+      }
+    };
+
+    fetchData();
+  }, []);
+
+  const stats = [
+    { label: '운영 중인 프로그램', value: programCount, icon: BookOpen, color: 'bg-blue-500' },
+    { label: '총 수강생', value: studentCount, icon: Users, color: 'bg-green-500' },
+    { label: '이번 주 수업', value: thisWeekClasses, icon: Calendar, color: 'bg-purple-500' },
   ];
 
   return (
@@ -51,37 +90,36 @@ export function TeacherHome({ user }: TeacherHomeProps) {
         ))}
       </div>
 
-      {/* Today's Classes */}
+      {/* 오늘의 수업 */}
       <Card>
         <CardHeader>
           <CardTitle className="text-base">오늘의 수업</CardTitle>
         </CardHeader>
         <CardContent className="space-y-3">
-          {todayClasses.map((classItem) => (
-            <div
-              key={classItem.id}
-              className={`p-3 rounded-lg ${
-                classItem.status === 'cancelled' ? 'bg-red-50' : 'bg-gray-50'
-              }`}
-            >
-              <div className="flex items-start justify-between mb-2">
-                <div>
-                  <p>{classItem.name}</p>
-                  <p className="text-sm text-gray-600">{classItem.time}</p>
+          {todayClasses.length === 0 ? (
+            <p className="text-gray-500">오늘 수업이 없습니다.</p>
+          ) : (
+            todayClasses.map((classItem) => (
+              <div key={classItem.id} className="p-3 rounded-lg bg-gray-50">
+                <div className="flex items-start justify-between mb-2">
+                  <div>
+                    <p>{classItem.name}</p>
+                    <p className="text-sm text-gray-600">{classItem.time}</p>
+                  </div>
+                  {classItem.status === 'cancelled' && (
+                    <Badge variant="destructive">휴강</Badge>
+                  )}
                 </div>
-                {classItem.status === 'cancelled' && (
-                  <Badge variant="destructive">휴강</Badge>
-                )}
-              </div>
-              <div className="flex items-center gap-4 text-sm text-gray-600">
-                <div className="flex items-center gap-1">
-                  <Users className="w-4 h-4" />
-                  <span>{classItem.students}명</span>
+                <div className="flex items-center gap-4 text-sm text-gray-600">
+                  <div className="flex items-center gap-1">
+                    <Users className="w-4 h-4" />
+                    <span>{classItem.students}명</span>
+                  </div>
+                  <span>· {classItem.location}</span>
                 </div>
-                <span>· {classItem.location}</span>
               </div>
-            </div>
-          ))}
+            ))
+          )}
         </CardContent>
       </Card>
     </div>

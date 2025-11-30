@@ -1,12 +1,35 @@
+import { useEffect, useState } from 'react';
 import { Card, CardContent } from './ui/card';
-import { Badge } from './ui/badge';
 import { Users, BookOpen, GraduationCap } from 'lucide-react';
+import { adminApi } from '../api/AdminHomeApi';
 
 export function AdminHome() {
+  const [totalStudents, setTotalStudents] = useState(0);
+  const [totalTeachers, setTotalTeachers] = useState(0);
+  const [totalPrograms, setTotalPrograms] = useState(0);
+
+  useEffect(() => {
+    const fetchStats = async () => {
+      try {
+        const studentsData = await adminApi.getStudentsStats();
+        const teachersData = await adminApi.getTeachersStats();
+        const programsData = await adminApi.getProgramsStats();
+
+        setTotalStudents(studentsData.length);
+        setTotalTeachers(teachersData.length);
+        setTotalPrograms(programsData.length);
+      } catch (err) {
+        console.error('관리자 대시보드 통계 불러오기 실패', err);
+      }
+    };
+
+    fetchStats();
+  }, []);
+
   const stats = [
-    { label: '전체 학생', value: '1,234', icon: Users, color: 'bg-blue-500' },
-    { label: '전체 선생님', value: '45', icon: GraduationCap, color: 'bg-green-500' },
-    { label: '운영 프로그램', value: '28', icon: BookOpen, color: 'bg-purple-500' },
+    { label: '전체 학생', value: totalStudents, icon: Users, color: 'bg-blue-500' },
+    { label: '전체 선생님', value: totalTeachers, icon: GraduationCap, color: 'bg-green-500' },
+    { label: '운영 프로그램', value: totalPrograms, icon: BookOpen, color: 'bg-purple-500' },
   ];
 
   return (
