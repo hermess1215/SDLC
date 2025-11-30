@@ -1,4 +1,10 @@
 import { useState, useEffect } from 'react';
+import { getPrograms, getStudentsByProgram } from '../api/getProgram';
+import { createProgram } from '../api/createProgram';
+import { deleteProgram } from '../api/deleteProgram';
+import { updateProgram } from '../api/updateProgramApi'; // 🔥 수정 API
+
+import type { Program } from '../api/types';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
@@ -10,267 +16,478 @@ import {
   DialogDescription,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
+  DialogTrigger
 } from './ui/dialog';
 import { Badge } from './ui/badge';
 import { Plus, Users, Calendar, MapPin, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
-import { programApi, Program } from '../api/TeacherProgramApi';
 
-// 학생 mock 데이터
-const studentNames = [
-  '김민준','이서연','박지호','최수아','정예준','강하은','조윤서','윤지우','장서준','임채원',
-  '한지민','오시우','신유나','권도현','송하린','배준서','홍지안','노아인','황민서','서은우'
-];
-
-// 프로그램 색상
-const getProgramColor = (programId: number) => {
-  const colors = [
-    { bg: 'bg-blue-50', border: 'border-blue-200' },
-    { bg: 'bg-purple-50', border: 'border-purple-200' },
-    { bg: 'bg-green-50', border: 'border-green-200' },
-    { bg: 'bg-orange-50', border: 'border-orange-200' },
-    { bg: 'bg-pink-50', border: 'border-pink-200' },
-    { bg: 'bg-cyan-50', border: 'border-cyan-200' },
-  ];
-  return colors[programId % colors.length];
-};
-
-const getStudentButtonColor = (programId: number) => {
-  const colors = [
-    'bg-blue-100 hover:bg-blue-200 text-blue-700 border-blue-300',
-    'bg-purple-100 hover:bg-purple-200 text-purple-700 border-purple-300',
-    'bg-green-100 hover:bg-green-200 text-green-700 border-green-300',
-    'bg-orange-100 hover:bg-orange-200 text-orange-700 border-orange-300',
-    'bg-pink-100 hover:bg-pink-200 text-pink-700 border-pink-300',
-    'bg-cyan-100 hover:bg-cyan-200 text-cyan-700 border-cyan-300',
-  ];
-  return colors[programId % colors.length];
-};
+const DAY_OPTIONS = ["MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN"];
 
 export function TeacherPrograms() {
   const [programs, setPrograms] = useState<Program[]>([]);
   const [selectedProgram, setSelectedProgram] = useState<Program | null>(null);
-  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
-  const [formData, setFormData] = useState({
+  const [openCreate, setOpenCreate] = useState(false);
+  const [editingProgram, setEditingProgram] = useState<Program | null>(null);
+  const [openEdit, setOpenEdit] = useState(false);
+
+  const [newProgram, setNewProgram] = useState({
+    classId: '',
     title: '',
     description: '',
-    location: '',
-    capacity: 20,
-    schedules: [{ dayOfWeek: 'MON', startTime: '', endTime: '' }],
+    classLocation: '',
+    capacity: 15,
+    schedules: [
+      { dayOfWeek: 'MON', startTime: '15:00', endTime: '16:00' }
+    ]
   });
 
-  // 방과후 프로그램 목록 불러오기
+  const [students, setStudents] = useState<any[]>([]);
+
   useEffect(() => {
     const fetchPrograms = async () => {
       try {
-        const data = await programApi.getPrograms();
+        const data = await getPrograms();
         setPrograms(data);
       } catch (err) {
-        toast.error('방과후 프로그램 목록을 가져오는 중 오류가 발생했습니다.');
+        console.error(err);
+        toast.error('프로그램 목록을 불러오지 못했습니다.');
       }
     };
     fetchPrograms();
   }, []);
 
-  // 프로그램 생성
-  const handleCreateProgram = async () => {
-    if (!formData.title || !formData.description) {
-      toast.error('필수 항목을 모두 입력해주세요.');
-      return;
-    }
-
+  // ===========================
+  // ⭐ 학생 목록 조회
+  // ===========================
+  const handleViewStudents = async (program: Program) => {
     try {
-      const newProgram = await programApi.createProgram({
-        classId: Date.now(),
-        title: formData.title,
-        description: formData.description,
-        teacherName: '홍길동',
-        classLocation: formData.location,
-        capacity: formData.capacity,
-        currentCount: 0,
-        schedules: formData.schedules.map(s => ({
-          dayOfWeek: s.dayOfWeek as 'MON'|'TUE'|'WED'|'THU'|'FRI'|'SAT'|'SUN',
+      const list = await getStudentsByProgram(program.classId);
+      setStudents(list);
+      setSelectedProgram(program);
+    } catch (err) {
+      console.error(err);
+      toast.error('수강생 목록을 불러오지 못했습니다.');
+    }
+  };
+
+  // ===========================
+  // ⭐ 프로그램 생성
+  // ===========================
+  const handleCreateProgram = async () => {
+    try {
+      const payload = {
+        title: newProgram.title,
+        description: newProgram.description,
+        capacity: Number(newProgram.capacity),
+        classLocation: newProgram.classLocation,
+        schedules: newProgram.schedules.map((s) => ({
+          dayOfWeek: s.dayOfWeek as "MON" | "TUE" | "WED" | "THU" | "FRI" | "SAT" | "SUN",
           startTime: s.startTime,
           endTime: s.endTime,
         })),
-      });
-      setPrograms([...programs, newProgram]);
-      toast.success('방과후 프로그램이 생성되었습니다.');
-      setIsCreateDialogOpen(false);
-      setFormData({ title: '', description: '', location: '', capacity: 20, schedules: [{ dayOfWeek: 'MON', startTime: '', endTime: '' }] });
+      };
+
+      await createProgram(payload);
+      toast('프로그램이 생성되었습니다.');
+
+      const data = await getPrograms();
+      setPrograms(data);
+      setOpenCreate(false);
     } catch (err) {
-      toast.error('프로그램 생성 중 오류가 발생했습니다.');
+      console.error(err);
+      toast.error('프로그램 생성에 실패했습니다.');
     }
   };
 
-  const handleScheduleChange = (idx: number, field: 'dayOfWeek' | 'startTime' | 'endTime', value: string) => {
-    const newSchedules = [...formData.schedules];
-    newSchedules[idx][field] = value;
-    setFormData({ ...formData, schedules: newSchedules });
+  // ===========================
+  // ⭐ 프로그램 삭제
+  // ===========================
+  const handleDeleteProgram = async (classId: number) => {
+    try {
+      await deleteProgram(classId);
+      toast('프로그램이 삭제되었습니다.');
+      setPrograms((prev) => prev.filter((p) => p.classId !== classId));
+    } catch (err) {
+      console.error(err);
+      toast.error('프로그램 삭제에 실패했습니다.');
+    }
   };
 
-  const addScheduleRow = () => {
-    setFormData({ ...formData, schedules: [...formData.schedules, { dayOfWeek: 'MON', startTime: '', endTime: '' }] });
+  // ===========================
+  // ⭐ 프로그램 수정
+  // ===========================
+  const handleEditProgram = (program: Program) => {
+    setEditingProgram({ ...program, schedules: [...program.schedules] });
+    setOpenEdit(true);
+  };
+
+  const handleUpdateProgram = async () => {
+    if (!editingProgram) return;
+
+    try {
+      const payload = {
+        title: editingProgram.title,
+        description: editingProgram.description,
+        capacity: Number(editingProgram.capacity),
+        classLocation: editingProgram.classLocation,
+        schedules: editingProgram.schedules.map((s) => ({
+          dayOfWeek: s.dayOfWeek as "MON" | "TUE" | "WED" | "THU" | "FRI" | "SAT" | "SUN",
+          startTime: s.startTime,
+          endTime: s.endTime
+        }))
+      };
+
+      await updateProgram(editingProgram.classId, payload);
+      toast('프로그램이 수정되었습니다.');
+
+      const data = await getPrograms();
+      setPrograms(data);
+      setOpenEdit(false);
+    } catch (err) {
+      console.error(err);
+      toast.error('프로그램 수정에 실패했습니다.');
+    }
   };
 
   return (
     <div className="p-4 space-y-4">
-      <div className="flex items-center justify-between">
-        <h2>내 방과후 프로그램</h2>
-        <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
+      <h2>내 프로그램</h2>
+
+      {/* 신규 생성 버튼 */}
+      <div className="flex justify-end">
+        <Dialog open={openCreate} onOpenChange={setOpenCreate}>
           <DialogTrigger asChild>
-            <Button size="sm">
-              <Plus className="w-4 h-4 mr-1" /> 프로그램 개설
+            <Button className="flex items-center gap-1">
+              <Plus className="w-4 h-4" /> 프로그램 개설
             </Button>
           </DialogTrigger>
-          <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
+
+          <DialogContent className="max-w-md">
             <DialogHeader>
-              <DialogTitle>새 프로그램 개설</DialogTitle>
-              <DialogDescription>방과후 프로그램 정보를 입력하세요</DialogDescription>
+              <DialogTitle>프로그램 개설</DialogTitle>
+              <DialogDescription>새로운 프로그램을 만들어주세요.</DialogDescription>
             </DialogHeader>
-            <div className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="title">프로그램 이름 *</Label>
+
+            <div className="space-y-3">
+              <div>
+                <Label>제목</Label>
                 <Input
-                  id="title"
-                  placeholder="예: 코딩 교실"
-                  value={formData.title}
-                  onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                  value={newProgram.title}
+                  onChange={(e) =>
+                    setNewProgram({ ...newProgram, title: e.target.value })
+                  }
                 />
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="description">프로그램 설명 *</Label>
+
+              <div>
+                <Label>설명</Label>
                 <Textarea
-                  id="description"
-                  placeholder="프로그램 내용을 자세히 설명해주세요"
-                  value={formData.description}
-                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                  rows={4}
+                  rows={3}
+                  value={newProgram.description}
+                  onChange={(e) =>
+                    setNewProgram({ ...newProgram, description: e.target.value })
+                  }
                 />
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="location">장소</Label>
+
+              <div>
+                <Label>장소</Label>
                 <Input
-                  id="location"
-                  placeholder="예: 컴퓨터실"
-                  value={formData.location}
-                  onChange={(e) => setFormData({ ...formData, location: e.target.value })}
+                  value={newProgram.classLocation}
+                  onChange={(e) =>
+                    setNewProgram({ ...newProgram, classLocation: e.target.value })
+                  }
                 />
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="capacity">정원</Label>
+
+              <div>
+                <Label>정원</Label>
                 <Input
-                  id="capacity"
                   type="number"
-                  value={formData.capacity}
-                  onChange={(e) => setFormData({ ...formData, capacity: parseInt(e.target.value) })}
+                  value={newProgram.capacity}
+                  onChange={(e) =>
+                    setNewProgram({ ...newProgram, capacity: Number(e.target.value) })
+                  }
                 />
               </div>
-              <div className="space-y-2">
-                <Label>수업 일정</Label>
-                {formData.schedules.map((s, idx) => (
-                  <div key={`schedule-${idx}`} className="flex gap-2">
-                    <select value={s.dayOfWeek} onChange={(e) => handleScheduleChange(idx, 'dayOfWeek', e.target.value)}>
-                      <option value="MON">월</option>
-                      <option value="TUE">화</option>
-                      <option value="WED">수</option>
-                      <option value="THU">목</option>
-                      <option value="FRI">금</option>
-                      <option value="SAT">토</option>
-                      <option value="SUN">일</option>
-                    </select>
-                    <Input type="time" value={s.startTime} onChange={(e) => handleScheduleChange(idx, 'startTime', e.target.value)} />
-                    <Input type="time" value={s.endTime} onChange={(e) => handleScheduleChange(idx, 'endTime', e.target.value)} />
-                  </div>
-                ))}
-                <Button variant="outline" size="sm" onClick={addScheduleRow}>일정 추가</Button>
+
+              <div>
+                <Label>요일</Label>
+                <select
+                  className="border rounded p-2 w-full"
+                  value={newProgram.schedules[0].dayOfWeek}
+                  onChange={(e) =>
+                    setNewProgram({
+                      ...newProgram,
+                      schedules: [
+                        { ...newProgram.schedules[0], dayOfWeek: e.target.value }
+                      ]
+                    })
+                  }
+                >
+                  {DAY_OPTIONS.map((day) => (
+                    <option key={day} value={day}>{day}</option>
+                  ))}
+                </select>
               </div>
-              <Button className="w-full" onClick={handleCreateProgram}>프로그램 생성</Button>
+
+              <div className="flex gap-2">
+                <div className="flex-1">
+                  <Label>시작 시간</Label>
+                  <Input
+                    type="time"
+                    value={newProgram.schedules[0].startTime}
+                    onChange={(e) =>
+                      setNewProgram({
+                        ...newProgram,
+                        schedules: [
+                          { ...newProgram.schedules[0], startTime: e.target.value }
+                        ]
+                      })
+                    }
+                  />
+                </div>
+
+                <div className="flex-1">
+                  <Label>종료 시간</Label>
+                  <Input
+                    type="time"
+                    value={newProgram.schedules[0].endTime}
+                    onChange={(e) =>
+                      setNewProgram({
+                        ...newProgram,
+                        schedules: [
+                          { ...newProgram.schedules[0], endTime: e.target.value }
+                        ]
+                      })
+                    }
+                  />
+                </div>
+              </div>
+
+              <Button className="w-full" onClick={handleCreateProgram}>
+                프로그램 생성
+              </Button>
             </div>
           </DialogContent>
         </Dialog>
       </div>
 
+      {/* 프로그램 카드 */}
       <div className="space-y-3">
         {programs.map((program) => (
           <Card key={program.classId}>
             <CardHeader className="pb-3">
               <div className="flex items-start justify-between">
                 <div className="flex-1">
-                  <CardTitle className="text-base mb-1">{program.title}</CardTitle>
-                  <Badge variant="outline">
-                    <Users className="w-3 h-3 mr-1" />
-                    {program.currentCount}/{program.capacity}
-                  </Badge>
+                  <CardTitle>{program.title}</CardTitle>
+                  <div className="flex items-center gap-2 text-sm">
+                    <Badge variant="outline">
+                      <Users className="w-3 h-3 mr-1" />
+                      {program.currentCount}/{program.capacity}
+                    </Badge>
+                  </div>
                 </div>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="text-red-500 hover:bg-red-50 hover:border-red-300"
-                  onClick={() => {
-                    if (confirm(`${program.title}을 삭제하시겠습니까?`)) {
-                      setPrograms(programs.filter((p) => p.classId !== program.classId));
-                      toast.success('프로그램이 삭제되었습니다.');
-                    }
-                  }}
-                >
-                  <Trash2 className="w-4 h-4" />
-                </Button>
+
+                <div className="flex items-start gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handleEditProgram(program)}
+                  >
+                    수정
+                  </Button>
+
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="text-red-500 hover:bg-red-50 hover:border-red-300"
+                    onClick={() => handleDeleteProgram(program.classId)}
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </Button>
+                </div>
               </div>
             </CardHeader>
+
             <CardContent className="space-y-2">
               <p className="text-sm text-gray-700">{program.description}</p>
-              {(program.schedules || []).map((s) => (
-                <div key={`${s.dayOfWeek}-${s.startTime}-${s.endTime}`} className="flex items-center gap-2 text-sm text-gray-600">
-                  <Calendar className="w-4 h-4" />
-                  <span>{s.dayOfWeek} {s.startTime}-{s.endTime}</span>
-                </div>
-              ))}
-              {program.classLocation && (
-                <div className="flex items-center gap-2 text-sm text-gray-600">
+
+              <div className="flex flex-col gap-1 text-sm text-gray-600">
+                {program.schedules.map((s, idx) => (
+                  <div key={idx} className="flex items-center gap-2">
+                    <Calendar className="w-4 h-4" />
+                    <span>{`${s.dayOfWeek} ${s.startTime}-${s.endTime}`}</span>
+                  </div>
+                ))}
+
+                <div className="flex items-center gap-2">
                   <MapPin className="w-4 h-4" />
                   <span>{program.classLocation}</span>
                 </div>
-              )}
+              </div>
+
               <Button
                 variant="outline"
                 size="sm"
-                className={`flex-1 ${getStudentButtonColor(program.classId)}`}
-                onClick={() => setSelectedProgram(program)}
+                className="mt-2 flex items-center gap-1"
+                onClick={() => handleViewStudents(program)}
               >
-                <Users className="w-4 h-4 mr-1" /> 수강생 목록
+                <Users className="w-4 h-4" /> 수강생 목록
               </Button>
             </CardContent>
           </Card>
         ))}
       </div>
 
-      {/* Student List Dialog */}
+      {/* 수강생 모달 */}
       <Dialog open={!!selectedProgram} onOpenChange={() => setSelectedProgram(null)}>
         <DialogContent className="w-full max-w-md h-[65vh] flex flex-col">
           <DialogHeader className="pb-2">
             <DialogTitle className="text-sm">{selectedProgram?.title}</DialogTitle>
             <DialogDescription className="text-xs text-gray-500">
-              {selectedProgram?.currentCount}/{selectedProgram?.capacity}명
+              수강생 {students.length}명 / 정원 {selectedProgram?.capacity}명
             </DialogDescription>
           </DialogHeader>
-          <div className="flex-1 overflow-y-auto space-y-1 mt-1">
-            {Array.from({ length: selectedProgram?.currentCount || 0 }, (_, i) => {
-              const color = selectedProgram ? getProgramColor(selectedProgram.classId) : { bg: "bg-gray-50", border: "border-gray-200" };
-              const studentName = studentNames[i % studentNames.length];
 
-              return (
-                <div key={`student-${i}-${studentName}`} className={`flex items-center justify-between p-1 rounded border text-xs ${color.bg} ${color.border}`}>
-                  <div>
-                    <p className="truncate">{studentName}</p>
-                    <p className="text-[10px] text-gray-500">2024010{i + 1}</p>
-                  </div>
-                  <Button variant="outline" size="sm" className="px-1 py-0.5 text-[10px]">출석</Button>
+          <div className="flex-1 overflow-y-auto space-y-1 mt-1">
+            {students.map((student) => (
+              <div
+                key={student.studentId}
+                className="flex items-center justify-between p-1 rounded border text-xs bg-gray-50 border-gray-200"
+              >
+                <div>
+                  <p className="truncate">{student.name}</p>
+                  <p className="text-[10px] text-gray-500">{student.email}</p>
                 </div>
-              );
-            })}
+                <Button variant="outline" size="sm" className="px-1 py-0.5 text-[10px]">
+                  출석
+                </Button>
+              </div>
+            ))}
           </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* 수정 모달 */}
+      <Dialog open={openEdit} onOpenChange={setOpenEdit}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>프로그램 수정</DialogTitle>
+            <DialogDescription>프로그램 정보를 수정하세요.</DialogDescription>
+          </DialogHeader>
+
+          {editingProgram && (
+            <div className="space-y-3">
+              <div>
+                <Label>제목</Label>
+                <Input
+                  value={editingProgram.title}
+                  onChange={(e) =>
+                    setEditingProgram({ ...editingProgram, title: e.target.value })
+                  }
+                />
+              </div>
+
+              <div>
+                <Label>설명</Label>
+                <Textarea
+                  rows={3}
+                  value={editingProgram.description}
+                  onChange={(e) =>
+                    setEditingProgram({ ...editingProgram, description: e.target.value })
+                  }
+                />
+              </div>
+
+              <div>
+                <Label>장소</Label>
+                <Input
+                  value={editingProgram.classLocation}
+                  onChange={(e) =>
+                    setEditingProgram({ ...editingProgram, classLocation: e.target.value })
+                  }
+                />
+              </div>
+
+              <div>
+                <Label>정원</Label>
+                <Input
+                  type="number"
+                  value={editingProgram.capacity}
+                  onChange={(e) =>
+                    setEditingProgram({ ...editingProgram, capacity: Number(e.target.value) })
+                  }
+                />
+              </div>
+
+              <div>
+                <Label>요일</Label>
+                <select
+                  className="border rounded p-2 w-full"
+                  value={newProgram.schedules[0].dayOfWeek}
+                  onChange={(e) =>
+                    setNewProgram({
+                      ...newProgram,
+                      schedules: [
+                        {
+                          ...newProgram.schedules[0],
+                          dayOfWeek: e.target.value as
+                            "MON" | "TUE" | "WED" | "THU" | "FRI" | "SAT" | "SUN"
+                        }
+                      ]
+                    })
+                  }
+                >
+                  {DAY_OPTIONS.map((day) => (
+                    <option key={day} value={day}>
+                      {day}
+                    </option>
+                  ))}
+                </select>
+
+              </div>
+
+              <div className="flex gap-2">
+                <div className="flex-1">
+                  <Label>시작 시간</Label>
+                  <Input
+                    type="time"
+                    value={editingProgram.schedules[0].startTime}
+                    onChange={(e) =>
+                      setEditingProgram({
+                        ...editingProgram,
+                        schedules: [
+                          { ...editingProgram.schedules[0], startTime: e.target.value }
+                        ]
+                      })
+                    }
+                  />
+                </div>
+
+                <div className="flex-1">
+                  <Label>종료 시간</Label>
+                  <Input
+                    type="time"
+                    value={editingProgram.schedules[0].endTime}
+                    onChange={(e) =>
+                      setEditingProgram({
+                        ...editingProgram,
+                        schedules: [
+                          { ...editingProgram.schedules[0], endTime: e.target.value }
+                        ]
+                      })
+                    }
+                  />
+                </div>
+              </div>
+
+              <Button className="w-full" onClick={handleUpdateProgram}>
+                수정 완료
+              </Button>
+            </div>
+          )}
         </DialogContent>
       </Dialog>
     </div>

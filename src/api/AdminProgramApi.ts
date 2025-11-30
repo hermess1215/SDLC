@@ -35,4 +35,8 @@ export const programApi = {
         const res = await api.get(`/api/classes/${classId}/students`); // 프로그램별 수강생
         return res.data;
     },
+
+    deleteProgram: async (classId: number): Promise<void> => {
+        await api.delete(`/api/classes/${classId}`);
+    },
 };

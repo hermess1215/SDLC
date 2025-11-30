@@ -1,4 +1,5 @@
 // AdminPrograms.tsx
+
 import { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Button } from './ui/button';
@@ -26,9 +27,32 @@ export function AdminPrograms() {
       });
   }, []);
 
-  // 삭제 안내
-  const handleDeleteProgram = (program: ProgramData) => {
-    toast('삭제 기능은 현재 비활성화되어 있습니다.');
+  // 실제 삭제 처리 함수
+  const handleDeleteProgram = async (program: ProgramData) => {
+    // 확인 대화상자
+    const confirmed = window.confirm(`'${program.title}' 프로그램을 정말 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.`);
+    if (!confirmed) return;
+
+    try {
+      await programApi.deleteProgram(program.classId);
+
+      // UI에서 리스트 제거
+      setProgramsList((prev) => prev.filter((p) => p.classId !== program.classId));
+
+      // 현재 보고 있는 상세/수강생 모달이 삭제된 프로그램이면 닫기
+      if (selectedProgram?.classId === program.classId) {
+        setSelectedProgram(null);
+      }
+      if (showStudentList && selectedProgram?.classId === program.classId) {
+        setShowStudentList(false);
+        setStudents([]);
+      }
+
+      toast.success('프로그램이 삭제되었습니다.');
+    } catch (error) {
+      console.error(error);
+      toast.error('삭제 중 문제가 발생했습니다.');
+    }
   };
 
   const handleViewStudents = async (program: ProgramData) => {
