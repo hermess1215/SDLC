@@ -21,21 +21,16 @@ import {
 
 import { usersApi, StudentData, TeacherData } from '../api/AdminUsersApi';
 
-// ----------------------
-// 전화번호 형식 변환 함수
-// ----------------------
+// 전화번호 포맷
 function formatPhoneNumber(num: string) {
   if (!num) return '';
-
   const digits = num.replace(/\D/g, '');
 
-  if (digits.length === 11) {
-    return digits.replace(/(\d{3})(\d{4})(\d{4})/, '$1-$2-$3'); // 010-1234-5678
-  }
+  if (digits.length === 11)
+    return digits.replace(/(\d{3})(\d{4})(\d{4})/, '$1-$2-$3');
 
-  if (digits.length === 10) {
-    return digits.replace(/(\d{2,3})(\d{3})(\d{4})/, '$1-$2-$3'); // 02-123-4567 or 031-123-4567
-  }
+  if (digits.length === 10)
+    return digits.replace(/(\d{2,3})(\d{3})(\d{4})/, '$1-$2-$3');
 
   return num;
 }
@@ -44,8 +39,10 @@ export function AdminUsers() {
   const [searchQuery, setSearchQuery] = useState('');
   const [students, setStudents] = useState<StudentData[]>([]);
   const [teachers, setTeachers] = useState<TeacherData[]>([]);
+
   const [selectedStudent, setSelectedStudent] = useState<StudentData | null>(null);
   const [selectedTeacher, setSelectedTeacher] = useState<TeacherData | null>(null);
+  const [deleteTargetStudent, setDeleteTargetStudent] = useState<StudentData | null>(null);
 
   useEffect(() => {
     const fetchUsers = async () => {
@@ -59,7 +56,6 @@ export function AdminUsers() {
     fetchUsers();
   }, []);
 
-  // 학생 검색
   const filteredStudents = students.filter(
     (s) =>
       s.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -67,16 +63,27 @@ export function AdminUsers() {
       s.email.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  // 교사 검색
   const filteredTeachers = teachers.filter(
     (t) =>
       t.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       t.email.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
+  // 실제 삭제
+  const handleDeleteStudent = async () => {
+    if (!deleteTargetStudent) return;
+
+    await usersApi.deleteStudent(deleteTargetStudent.studentId);
+
+    setStudents((prev) =>
+      prev.filter((s) => s.studentId !== deleteTargetStudent.studentId)
+    );
+
+    setDeleteTargetStudent(null);
+  };
+
   return (
     <div className="p-4 space-y-4">
-      {/* 검색 */}
       <div className="sticky top-0 bg-gray-50 pb-2 z-10">
         <h2 className="mb-3">사용자 관리</h2>
         <div className="relative">
@@ -121,14 +128,37 @@ export function AdminUsers() {
                     </p>
                   </div>
 
+                  {/* 학생만 상세 / 삭제 */}
                   <DropdownMenu>
-                    <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
+                    <DropdownMenuTrigger
+                      asChild
+                      onClick={(e) => e.stopPropagation()}
+                    >
                       <Button variant="ghost" size="icon">
                         <MoreVertical className="w-4 h-4" />
                       </Button>
                     </DropdownMenuTrigger>
+
                     <DropdownMenuContent align="end">
-                      <DropdownMenuItem>상세 정보</DropdownMenuItem>
+                      <DropdownMenuItem
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setSelectedStudent(student);
+                        }}
+                      >
+                        상세 정보
+                      </DropdownMenuItem>
+
+                      <DropdownMenuItem
+                        className="text-red-600"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setSelectedStudent(null); // 상세모달 방지
+                          setDeleteTargetStudent(student);
+                        }}
+                      >
+                        삭제
+                      </DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>
                 </div>
@@ -157,14 +187,24 @@ export function AdminUsers() {
                   </div>
 
                   <DropdownMenu>
-                    <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
+                    <DropdownMenuTrigger
+                      asChild
+                      onClick={(e) => e.stopPropagation()}
+                    >
                       <Button variant="ghost" size="icon">
                         <MoreVertical className="w-4 h-4" />
                       </Button>
                     </DropdownMenuTrigger>
 
                     <DropdownMenuContent align="end">
-                      <DropdownMenuItem>상세 정보</DropdownMenuItem>
+                      <DropdownMenuItem
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setSelectedTeacher(teacher);
+                        }}
+                      >
+                        상세 정보
+                      </DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>
                 </div>
@@ -222,6 +262,34 @@ export function AdminUsers() {
               </div>
             </div>
           )}
+        </DialogContent>
+      </Dialog>
+
+      {/* 삭제 확인 모달 (삭제만 보여줌) */}
+      <Dialog open={!!deleteTargetStudent} onOpenChange={() => setDeleteTargetStudent(null)}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle>학생 삭제</DialogTitle>
+            <DialogDescription>
+              정말로{' '}
+              <span className="font-semibold">
+                {deleteTargetStudent?.name}
+              </span>
+              학생 계정을 삭제할까요?
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="flex justify-center gap-2 mt-4">
+            <Button
+              variant="destructive"
+              onClick={handleDeleteStudent}
+            >
+              삭제
+            </Button>
+            <Button variant="outline" onClick={() => setDeleteTargetStudent(null)}>
+              취소
+            </Button>
+          </div>
         </DialogContent>
       </Dialog>
     </div>

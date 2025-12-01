@@ -28,4 +28,8 @@ export const usersApi = {
     const res = await api.get('/api/users/teachers');
     return res.data;
   },
+
+  async deleteStudent(studentId: number): Promise<void> {
+    await api.delete(`/api/users/students/${studentId}`);
+  },
 };
