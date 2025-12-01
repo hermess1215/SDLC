@@ -352,9 +352,6 @@ export function TeacherPrograms({ programs, setPrograms, fetchPrograms }: Teache
                   <p className="truncate">{student.name}</p>
                   <p className="text-[10px] text-gray-500">{student.email}</p>
                 </div>
-                <Button variant="outline" size="sm" className="px-1 py-0.5 text-[10px]">
-                  출석
-                </Button>
               </div>
             ))}
           </div>
