@@ -66,33 +66,21 @@ export function TeacherAnnouncements({ programs }: TeacherAnnouncementsProps) {
     }
 
     try {
-      const newNotice = await createAnnouncement(formData.classId, {
+      await createAnnouncement(formData.classId, {
         title: formData.title,
         content: formData.content,
         noticeType: formData.type,
       });
 
-      if (!newNotice.noticeId) {
-        toast.error('noticeId가 정상적으로 반환되지 않았습니다.');
-        return;
-      }
+      toast.success('공지사항이 등록되었습니다.');
 
-      const program = programs.find(p => p.classId === formData.classId);
+      // 🔥 서버에서 최신 공지 다시 불러오기
+      await fetchAnnouncements();
 
-      const noticeWithClassId: AnnouncementWithClassId = {
-        ...newNotice,
-        classId: program?.classId,
-      };
-
-      // 🔹 리스트 최상단에 즉시 추가
-      setAnnouncements(prev => [noticeWithClassId, ...prev]);
-
-      toast.success('공지사항이 등록되었습니다');
-
-      // 🔹 모달 닫기
+      // 모달 닫기
       setIsCreateDialogOpen(false);
 
-      // 🔹 입력값 초기화
+      // 입력값 초기화
       setFormData({
         type: 'COMMON',
         classId: programs[0]?.classId,
