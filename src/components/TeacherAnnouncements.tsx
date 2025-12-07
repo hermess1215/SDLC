@@ -16,12 +16,12 @@ interface TeacherAnnouncementsProps {
   programs: Program[];
 }
 
-// Announcement에 classId를 임시로 붙인 타입
 type AnnouncementWithClassId = Announcement & { classId?: number };
 
 export function TeacherAnnouncements({ programs }: TeacherAnnouncementsProps) {
   const [announcements, setAnnouncements] = useState<AnnouncementWithClassId[]>([]);
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+
   const [formData, setFormData] = useState<{
     type: NoticeType;
     classId?: number;
@@ -34,12 +34,12 @@ export function TeacherAnnouncements({ programs }: TeacherAnnouncementsProps) {
     content: '',
   });
 
-  // 🔹 공지사항 불러오기 및 classId 매핑
+  // 🔹 공지 불러오기
   const fetchAnnouncements = async () => {
     try {
       const data: Announcement[] = await getAnnouncements();
 
-      const mapped: AnnouncementWithClassId[] = data.map(a => {
+      const mapped = data.map(a => {
         const program = programs.find(p => p.title === a.classTitle);
         return {
           ...a,
@@ -49,7 +49,7 @@ export function TeacherAnnouncements({ programs }: TeacherAnnouncementsProps) {
 
       setAnnouncements(mapped);
     } catch (err) {
-      console.error('공지사항 로드 실패', err);
+      console.error(err);
       toast.error('공지사항을 불러오지 못했습니다.');
     }
   };
@@ -58,7 +58,7 @@ export function TeacherAnnouncements({ programs }: TeacherAnnouncementsProps) {
     if (programs.length > 0) fetchAnnouncements();
   }, [programs]);
 
-  // 🔹 공지사항 생성
+  // 🔹 공지 생성
   const handleCreateAnnouncement = async () => {
     if (!formData.classId || !formData.title || !formData.content) {
       toast.error('모든 항목을 입력해주세요');
@@ -73,28 +73,39 @@ export function TeacherAnnouncements({ programs }: TeacherAnnouncementsProps) {
       });
 
       if (!newNotice.noticeId) {
-        toast.error('서버에서 noticeId가 정상적으로 반환되지 않았습니다.');
+        toast.error('noticeId가 정상적으로 반환되지 않았습니다.');
         return;
       }
 
-      // Program 배열에서 classId 붙이기
       const program = programs.find(p => p.classId === formData.classId);
+
       const noticeWithClassId: AnnouncementWithClassId = {
         ...newNotice,
         classId: program?.classId,
       };
 
+      // 🔹 리스트 최상단에 즉시 추가
       setAnnouncements(prev => [noticeWithClassId, ...prev]);
+
       toast.success('공지사항이 등록되었습니다');
+
+      // 🔹 모달 닫기
       setIsCreateDialogOpen(false);
-      setFormData({ type: 'COMMON', classId: programs[0]?.classId, title: '', content: '' });
+
+      // 🔹 입력값 초기화
+      setFormData({
+        type: 'COMMON',
+        classId: programs[0]?.classId,
+        title: '',
+        content: '',
+      });
     } catch (err) {
       console.error(err);
       toast.error('공지사항 등록에 실패했습니다.');
     }
   };
 
-  // 🔹 공지사항 삭제
+  // 🔹 공지 삭제
   const handleDeleteAnnouncement = async (noticeId: number) => {
     try {
       await deleteAnnouncement(noticeId);
@@ -127,13 +138,15 @@ export function TeacherAnnouncements({ programs }: TeacherAnnouncementsProps) {
       {/* 상단 버튼 */}
       <div className="flex items-center justify-between">
         <h2>공지사항 관리</h2>
+
         <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
           <DialogTrigger asChild>
             <Button size="sm">
               <Plus className="w-4 h-4 mr-1" /> 공지 작성
             </Button>
           </DialogTrigger>
-          <DialogContent className="max-w-md">
+
+          <DialogContent className="max-w-md" onInteractOutside={(e) => e.preventDefault()}>
             <DialogHeader>
               <DialogTitle>새 공지사항 작성</DialogTitle>
               <DialogDescription>학생들에게 전달할 내용을 작성하세요</DialogDescription>
@@ -142,7 +155,12 @@ export function TeacherAnnouncements({ programs }: TeacherAnnouncementsProps) {
             <div className="space-y-4">
               <div className="space-y-2">
                 <Label>공지 유형 *</Label>
-                <Select value={formData.type} onValueChange={(value: NoticeType) => setFormData({ ...formData, type: value })}>
+                <Select
+                  value={formData.type}
+                  onValueChange={(value: NoticeType) =>
+                    setFormData({ ...formData, type: value })
+                  }
+                >
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="COMMON">일반 공지</SelectItem>
@@ -158,34 +176,53 @@ export function TeacherAnnouncements({ programs }: TeacherAnnouncementsProps) {
                   <select
                     className="w-full min-h-[40px] rounded-md border border-gray-300 bg-white px-3 py-2 text-sm appearance-none"
                     value={formData.classId || ''}
-                    onChange={(e) => setFormData({ ...formData, classId: parseInt(e.target.value) })}
+                    onChange={(e) =>
+                      setFormData({ ...formData, classId: parseInt(e.target.value) })
+                    }
                   >
                     {programs.map((p, idx) => (
-                      <option key={`${p.classId}-${idx}`} value={p.classId}>{p.title}</option>
+                      <option key={`${p.classId}-${idx}`} value={p.classId}>
+                        {p.title}
+                      </option>
                     ))}
                   </select>
                 ) : (
-                  <p className="text-sm text-red-500">개설된 프로그램이 없습니다. 프로그램을 먼저 개설해주세요.</p>
+                  <p className="text-sm text-red-500">프로그램을 먼저 개설해주세요.</p>
                 )}
               </div>
 
               <div className="space-y-2">
                 <Label>제목 *</Label>
-                <Input placeholder="공지 제목" value={formData.title} onChange={(e) => setFormData({ ...formData, title: e.target.value })} />
+                <Input
+                  placeholder="공지 제목"
+                  value={formData.title}
+                  onChange={(e) =>
+                    setFormData({ ...formData, title: e.target.value })
+                  }
+                />
               </div>
 
               <div className="space-y-2">
                 <Label>내용 *</Label>
-                <Textarea placeholder="공지 내용을 입력하세요" value={formData.content} onChange={(e) => setFormData({ ...formData, content: e.target.value })} rows={4} />
+                <Textarea
+                  placeholder="공지 내용을 입력하세요"
+                  value={formData.content}
+                  onChange={(e) =>
+                    setFormData({ ...formData, content: e.target.value })
+                  }
+                  rows={4}
+                />
               </div>
 
-              <Button className="w-full" onClick={handleCreateAnnouncement}>공지사항 등록</Button>
+              <Button className="w-full" onClick={handleCreateAnnouncement}>
+                공지사항 등록
+              </Button>
             </div>
           </DialogContent>
         </Dialog>
       </div>
 
-      {/* 공지사항 리스트 */}
+      {/* 공지 리스트 */}
       <div className="space-y-3">
         {announcements.length === 0 ? (
           <p className="text-sm text-gray-500">등록된 공지사항이 없습니다.</p>
@@ -203,14 +240,30 @@ export function TeacherAnnouncements({ programs }: TeacherAnnouncementsProps) {
                           {getTypeBadge(a.noticeType)}
                         </div>
                         <p className="text-sm text-gray-600">
-                          {programs.find(p => p.classId === a.classId)?.title || a.classTitle}
+                          {programs.find((p) => p.classId === a.classId)?.title ||
+                            a.classTitle}
                         </p>
                       </div>
                     </div>
+
                     <p className="text-sm text-gray-700 mb-2">{a.content}</p>
+
                     <div className="flex items-center justify-between">
-                      <p className="text-xs text-gray-500">{new Date(a.createdAt).toLocaleDateString('ko-KR', { month: 'long', day: 'numeric' })}</p>
-                      <Button variant="ghost" size="sm" className="text-xs h-7" onClick={() => handleDeleteAnnouncement(a.noticeId)}>삭제</Button>
+                      <p className="text-xs text-gray-500">
+                        {new Date(a.createdAt).toLocaleDateString('ko-KR', {
+                          month: 'long',
+                          day: 'numeric',
+                        })}
+                      </p>
+
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="text-xs h-7"
+                        onClick={() => handleDeleteAnnouncement(a.noticeId)}
+                      >
+                        삭제
+                      </Button>
                     </div>
                   </div>
                 </div>

@@ -4,7 +4,6 @@ import { Input } from './ui/input';
 import { Label } from './ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import { GraduationCap, ArrowLeft, Upload } from 'lucide-react';
 import { toast } from 'sonner';
 import type { User } from '../App';
@@ -69,16 +68,7 @@ export function SignupPage({ onSignup, onBackToLogin }: SignupPageProps) {
 
       console.log('서버 응답:', response);
       toast.success('회원가입이 완료되었습니다!');
-      onSignup({
-        email: studentData.email,
-        name: studentData.name,
-        password: studentData.password,
-        confirmPassword: studentData.confirmPassword,
-        type: 'student',
-        grade: studentData.grade,
-        classNo: studentData.classNo,
-        classNumber: studentData.classNumber,
-      });
+      onBackToLogin(); // 회원가입 후 로그인 페이지로 이동
     } catch (error: any) {
       console.error('회원가입 실패:', error);
       toast.error('회원가입 중 오류가 발생했습니다.');
@@ -104,13 +94,7 @@ export function SignupPage({ onSignup, onBackToLogin }: SignupPageProps) {
 
       console.log('서버 응답:', response);
       toast.success('회원가입이 완료되었습니다!');
-      onSignup({
-        email: teacherData.email,
-        name: teacherData.name,
-        password: teacherData.password,
-        confirmPassword: teacherData.confirmPassword,
-        type: 'teacher',
-      });
+      onBackToLogin(); // 회원가입 후 로그인 페이지로 이동
     } catch (error: any) {
       console.error('회원가입 실패:', error);
       toast.error('회원가입 중 오류가 발생했습니다.');
@@ -118,35 +102,29 @@ export function SignupPage({ onSignup, onBackToLogin }: SignupPageProps) {
   };
 
   const handleAdminSignup = async (e: React.FormEvent) => {
-  e.preventDefault();
+    e.preventDefault();
 
-  if (adminData.password !== adminData.confirmPassword) {
-    toast.error('비밀번호가 일치하지 않습니다');
-    return;
-  }
+    if (adminData.password !== adminData.confirmPassword) {
+      toast.error('비밀번호가 일치하지 않습니다');
+      return;
+    }
 
-  try {
-    const response = await signupApi.adminSignup({
-      name: adminData.name,
-      email: adminData.email,
-      password: adminData.password,
-      authCode: adminData.authCode,
-    });
+    try {
+      const response = await signupApi.adminSignup({
+        name: adminData.name,
+        email: adminData.email,
+        password: adminData.password,
+        authCode: adminData.authCode,
+      });
 
-    console.log('서버 응답:', response);
-    toast.success('관리자 계정이 생성되었습니다!');
-    onSignup({
-      email: adminData.email,
-      name: adminData.name,
-      password: adminData.password,
-      confirmPassword: adminData.confirmPassword,
-      type: 'admin',
-    });
-  } catch (error: any) {
-    console.error('관리자 회원가입 실패:', error);
-    toast.error('회원가입 중 오류가 발생했습니다.');
-  }
-};
+      console.log('서버 응답:', response);
+      toast.success('관리자 계정이 생성되었습니다!');
+      onBackToLogin(); // 회원가입 후 로그인 페이지로 이동
+    } catch (error: any) {
+      console.error('관리자 회원가입 실패:', error);
+      toast.error('회원가입 중 오류가 발생했습니다.');
+    }
+  };
 
 
   return (
